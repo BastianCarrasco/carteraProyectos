@@ -1,26 +1,23 @@
 <template>
-  <div class="projects">
-    <h1>Lista de Proyectos</h1>
-    <div v-if="loading">Cargando proyectos...</div>
-    <div v-else-if="error">{{ error }}</div>
-    <div v-else>
-      <ul>
-        <li v-for="proyecto in proyectos" :key="proyecto.id_proyecto">
-          <h2>{{ proyecto.nombre || 'Sin nombre' }}</h2>
-          <p>Monto: {{ proyecto.monto ? `$${proyecto.monto}` : 'No especificado' }}</p>
-          <p>Fecha: {{ proyecto.fecha_postulacion ? new Date(proyecto.fecha_postulacion).toLocaleDateString() : 'No especificada' }}</p>
-          <p>Comentarios: {{ proyecto.comentarios || 'Sin comentarios' }}</p>
-        </li>
-      </ul>
-    </div>
+  <div class="projects-view">
+
+    <Lista 
+      :proyectos="proyectos" 
+      :loading="loading" 
+      :error="error" 
+    />
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
+import Lista from '@/components/proyectos/lista.vue';
 
 export default {
   name: 'ProjectsView',
+  components: {
+    Lista
+  },
   setup() {
     const proyectos = ref([]);
     const loading = ref(true);
@@ -51,17 +48,15 @@ export default {
 </script>
 
 <style scoped>
-.projects {
+.projects-view {
   padding: 20px;
+  width: 100%; /* Ocupa todo el ancho */
+  margin: 0;
+  max-width: none; /* Elimina el límite máximo de ancho */
 }
-ul {
-  list-style: none;
-  padding: 0;
-}
-li {
-  border: 1px solid #ddd;
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: 4px;
+
+.projects-view h1 {
+  max-width: 1200px;
+  margin: 0 auto 20px auto; /* Centra solo el título */
 }
 </style>
