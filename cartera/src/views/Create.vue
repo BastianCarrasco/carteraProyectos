@@ -4,18 +4,20 @@
       <ProjectForm />
     </div>
     <div class="right-column">
-      <!-- Espacio reservado para contenido futuro -->
+      <Conexion />
     </div>
   </div>
 </template>
 
 <script>
 import ProjectForm from '../components/ProjectForm.vue';
+import Conexion from '../components/Connex.vue'; // Asegúrate que el nombre del archivo coincida
 
 export default {
   name: 'MainLayout',
   components: {
-    ProjectForm
+    ProjectForm,
+    Conexion
   }
 }
 </script>
