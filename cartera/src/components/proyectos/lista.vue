@@ -42,19 +42,18 @@
       </div>
 
       <div class="project-list">
-        <div
-          v-for="proyecto in filteredProjects"
-          :key="proyecto.id_proyecto"
-          class="project-card"
-          :class="{'highlighted-project': proyecto.destacado}"
-        >
-          <div class="project-header">
-            <div class="title-wrapper">
-              <h2 class="project-title">{{ proyecto.nombre || 'Proyecto sin nombre' }}</h2>
-              <span class="project-status" :class="getStatusClass(proyecto.estado)">
-                {{ proyecto.estado || 'Estado no especificado' }}
-              </span>
-            </div>
+      <div
+        v-for="proyecto in filteredProjects"
+        :key="proyecto.id_proyecto"
+        class="project-card"
+        :class="{'highlighted-project': proyecto.destacado}"
+      >
+        <div class="project-header">
+          <h2 class="project-title">{{ proyecto.nombre || 'Proyecto sin nombre' }}</h2>
+          <div class="title-wrapper">
+            <span class="project-status" :class="getStatusClass(proyecto.estado)">
+              {{ proyecto.estado || 'Estado no especificado' }}
+            </span>
             <div class="logos">
               <img
                 :src="getLogoForTipo(proyecto.Tipo_Convo)"
@@ -71,6 +70,7 @@
               />
             </div>
           </div>
+        </div>
 
           <div class="project-body">
             <div class="info-grid">
@@ -319,5 +319,31 @@ const openDocument = (doc) => {
 </script>
 
 <style scoped>
+
+.project-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.project-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  width: 100%;
+}
+
+.title-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.logos {
+  display: flex;
+  gap: 0.5rem;
+}
 
 </style>
