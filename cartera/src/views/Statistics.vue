@@ -62,12 +62,12 @@
         </div>
         
         <!-- Gráfico 3: Proyectos por año -->
-        <div class="chart-card">
-          <h2>Proyectos por Año</h2>
-          <div class="chart-wrapper">
-            <canvas ref="yearChart"></canvas>
-          </div>
-        </div>
+<div class="chart-card">
+  <h2>Proyectos por Facultad</h2>
+  <div class="chart-wrapper">
+    <canvas ref="projectsFacultyChart"></canvas>
+  </div>
+</div>
         
         <!-- Tabla de líderes de proyectos -->
         <div class="table-card">
@@ -99,6 +99,7 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue'; // Añadidos watch y nextTick
 import { Chart, registerables } from 'chart.js';
+import '../assets/Proyecto_styles/estadisticas.css';
 
 // Registra los componentes de Chart.js
 Chart.register(...registerables);
@@ -112,6 +113,8 @@ const yearChart = ref(null);
 const proyectos = ref([]);
 const loading = ref(true);
 const error = ref(null);
+const projectsFacultyChart = ref(null);
+
 
 // Método para formatear moneda
 const formatCurrency = (amount) => {
@@ -210,6 +213,8 @@ const facultyAmounts = computed(() => {
   return amounts;
 });
 
+
+
 const projectsByYear = computed(() => {
   const years = {};
   proyectos.value.forEach(proyecto => {
@@ -247,6 +252,35 @@ const renderCharts = () => {
   if (yearChart.value && yearChart.value._chart) {
     yearChart.value._chart.destroy();
   }
+
+  if (projectsFacultyChart.value && projectsFacultyChart.value._chart) {
+  projectsFacultyChart.value._chart.destroy();
+}
+
+if (projectsFacultyChart.value) {
+  new Chart(projectsFacultyChart.value.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(projectsByFaculty.value),
+      datasets: [{
+        label: 'Cantidad de Proyectos',
+        data: Object.values(projectsByFaculty.value),
+        backgroundColor: '#FF9F40'
+      }]
+    },
+    options: {
+      indexAxis: 'y', // Puedes quitar esta línea si prefieres barras verticales
+      scales: {
+        x: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+}
+
+
+  
 
   // Gráfico de tipos de convocatoria
   if (typeChart.value) {
@@ -302,152 +336,17 @@ const renderCharts = () => {
     });
   }
 };
+
+const projectsByFaculty = computed(() => {
+  const counts = {};
+  proyectos.value.forEach(proyecto => {
+    const faculty = proyecto.UA;
+    counts[faculty] = (counts[faculty] || 0) + 1;
+  });
+  return counts;
+});
 </script>
 
 <style scoped>
-.stats-container {
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-}
 
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-value {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-.stat-label {
-  font-size: 1rem;
-  color: #7f8c8d;
-  margin-top: 0.5rem;
-}
-
-.stat-icon {
-  position: absolute;
-  right: 1.5rem;
-  top: 1.5rem;
-  font-size: 2rem;
-  opacity: 0.2;
-}
-
-.charts-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
-}
-
-.chart-card, .table-card {
-  background: white;
-  border-radius: 8px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
-
-.chart-card h2, .table-card h2 {
-  margin-top: 0;
-  margin-bottom: 1.5rem;
-  font-size: 1.25rem;
-  color: #2c3e50;
-}
-
-.chart-wrapper {
-  position: relative;
-  height: 300px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th, td {
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid #eee;
-}
-
-th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #3498db;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2rem;
-  background-color: #fdecea;
-  border-radius: 4px;
-  color: #d32f2f;
-}
-
-.error-icon {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-
-.retry-button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  background-color: #d32f2f;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.retry-button:hover {
-  background-color: #b71c1c;
-}
-
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .charts-container {
-    grid-template-columns: 1fr;
-  }
-}
 </style>

@@ -1,8 +1,10 @@
 <template>
   <nav class="navbar">
+     <router-link to="/" class="nav-link">Home</router-link>
     <router-link to="/projects" class="nav-link">Proyectos</router-link>
     <router-link to="/create" class="nav-link">Crear</router-link>
     <router-link to="/statistics" class="nav-link">Estadísticas</router-link>
+    <router-link to="/documents" class="nav-link">Documentos</router-link>
   </nav>
 </template>
 
