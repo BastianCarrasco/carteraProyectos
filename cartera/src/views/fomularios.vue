@@ -57,7 +57,7 @@
 
         <div class="investigator-info">
           <div class="info-item">
-            <span class="label">👤 Investigador:</span>
+            <span style="color: black;" class="label">👤 Investigador:</span>
             <span class="value">{{ obtenerNombreAcademico(respuestaSeleccionada.nombre_investigador) }}</span>
           </div>
           <div class="info-item">
