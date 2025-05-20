@@ -2,27 +2,57 @@
   <div class="responses-view">
     <h2 class="page-title">📋 Respuestas de Cuestionarios</h2>
 
+    <!-- Filtros -->
+    <div class="filters">
+      <div class="filter-group">
+        <label for="nombreFilter">🔍 Filtrar por nombre:</label>
+        <input 
+          id="nombreFilter" 
+          v-model="nombreFilter" 
+          type="text" 
+          placeholder="Buscar investigador..."
+        >
+      </div>
+      <div class="filter-group">
+        <label for="fechaFilter">📅 Filtrar por fecha:</label>
+        <input 
+          id="fechaFilter" 
+          v-model="fechaFilter" 
+          type="date"
+        >
+      </div>
+      <button @click="limpiarFiltros" class="clear-filters">🔄 Limpiar filtros</button>
+    </div>
+
     <div class="responses-layout">
-      <!-- Columna izquierda - Lista de botones -->
+      <!-- Columna izquierda - Lista de respuestas -->
       <div class="responses-list">
         <h3>Lista de respuestas</h3>
-        <button 
-          v-for="respuesta in respuestas" 
-          :key="respuesta.id"
-          @click="seleccionarRespuesta(respuesta)"
-          :class="['response-card', { 'active': respuestaSeleccionada?.id === respuesta.id }]"
-        >
-          <div class="investigator">{{ obtenerNombreAcademico(respuesta.nombre_investigador) }}</div>
-          <div class="school">🏫 Escuela: {{ obtenerNombreEscuela(respuesta.escuela) }}</div>
-          <div class="date">📅 {{ formatDate(respuesta.fecha_creacion) }}</div>
-        </button>
+        <div class="response-cards-container">
+          <button 
+            v-for="respuesta in respuestasFiltradas" 
+            :key="respuesta.id"
+            @click="seleccionarRespuesta(respuesta)"
+            :class="['response-card', { 
+              'active': respuestaSeleccionada?.id === respuesta.id,
+              'today': esHoy(respuesta.fecha_creacion)
+            }]"
+          >
+            <div class="card-header">
+              <div class="investigator">{{ obtenerNombreAcademico(respuesta.nombre_investigador) }}</div>
+              <span v-if="esHoy(respuesta.fecha_creacion)" class="today-badge">Hoy</span>
+            </div>
+            <div class="school">🏫 Escuela: {{ obtenerNombreEscuela(respuesta.escuela) }}</div>
+            <div class="date">📅 {{ formatDate(respuesta.fecha_creacion) }}</div>
+          </button>
+        </div>
       </div>
 
       <!-- Columna derecha - Detalles de la respuesta seleccionada -->
       <div class="response-details" v-if="respuestaSeleccionada">
         <div class="detail-header">
           <h3>📝 Detalles de la Respuesta</h3>
-          <div class="response-id">ID Respuesta: <strong>{{ respuestaSeleccionada.id }}</strong></div>
+          <!-- <div class="response-id">ID Respuesta: <strong>{{ respuestaSeleccionada.id }}</strong></div> -->
         </div>
 
         <div class="investigator-info">
@@ -42,34 +72,45 @@
 
         <div class="answers-section">
           <h4>📖 Respuestas del Cuestionario</h4>
-          <div class="answers-grid">
+          <div class="answers-container">
             <div 
-              class="answer-item" 
+              class="question-answer-pair" 
               v-for="(respuesta, index) in respuestasNumeradas" 
               :key="index"
             >
-              <div class="question-number">Pregunta {{ index + 1 }}</div>
-              <div class="answer-content">{{ respuesta || 'Sin respuesta' }}</div>
+              <div class="question-section">
+                <div class="question-number">Pregunta {{ index + 1 }}</div>
+                <div class="question-text">{{ obtenerPregunta(index + 1) }}</div>
+              </div>
+              <div class="answer-section">
+                <div class="answer-content">{{ respuesta || 'Sin respuesta' }}</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <div class="empty-state" v-else>
-        <p>👈 Haz clic en una respuesta de la lista para ver sus detalles</p>
+        <div class="empty-content">
+          <p>👈 Selecciona una respuesta de la lista para ver sus detalles</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import '../assets/Proyecto_styles/respuestas_formu.css'
 export default {
   data() {
     return {
       respuestas: [],
       respuestaSeleccionada: null,
       academicos: [],
-      unidades: []
+      unidades: [],
+      preguntas: [],
+      nombreFilter: '',
+      fechaFilter: ''
     }
   },
   computed: {
@@ -86,24 +127,49 @@ export default {
         this.respuestaSeleccionada.respuesta_8,
         this.respuestaSeleccionada.respuesta_9
       ]
+    },
+    respuestasFiltradas() {
+      let filtered = this.respuestas;
+      
+      // Filtrar por nombre
+      if (this.nombreFilter) {
+        const searchTerm = this.nombreFilter.toLowerCase();
+        filtered = filtered.filter(respuesta => {
+          const nombre = this.obtenerNombreAcademico(respuesta.nombre_investigador).toLowerCase();
+          return nombre.includes(searchTerm);
+        });
+      }
+      
+      // Filtrar por fecha
+      if (this.fechaFilter) {
+        filtered = filtered.filter(respuesta => {
+          const respuestaDate = new Date(respuesta.fecha_creacion).toISOString().split('T')[0];
+          return respuestaDate === this.fechaFilter;
+        });
+      }
+      
+      return filtered;
     }
   },
   methods: {
     async cargarDatos() {
       try {
-        const [respuestasRes, academicosRes, unidadesRes] = await Promise.all([
+        const [respuestasRes, academicosRes, unidadesRes, preguntasRes] = await Promise.all([
           fetch('https://kth2025backend-production.up.railway.app/respuestas-cuestionarios'),
           fetch('https://kth2025backend-production.up.railway.app/academicos'),
-          fetch('https://kth2025backend-production.up.railway.app/ua')
+          fetch('https://kth2025backend-production.up.railway.app/ua'),
+          fetch('https://kth2025backend-production.up.railway.app/cuestionarios')
         ])
 
         const respuestasJson = await respuestasRes.json()
         const academicosJson = await academicosRes.json()
         const unidadesJson = await unidadesRes.json()
+        const preguntasJson = await preguntasRes.json()
 
         this.respuestas = respuestasJson.data || []
         this.academicos = academicosJson.data || []
         this.unidades = unidadesJson.data || []
+        this.preguntas = preguntasJson.data || []
       } catch (e) {
         console.error('Error cargando datos:', e)
       }
@@ -127,6 +193,20 @@ export default {
     obtenerNombreEscuela(id) {
       const unidad = this.unidades.find(u => u.id_unidad === id)
       return unidad ? unidad.nombre : `ID ${id}`
+    },
+    obtenerPregunta(numeroPregunta) {
+      const pregunta = this.preguntas.find(p => p.id_cuestionario === numeroPregunta)
+      return pregunta ? pregunta.pregunta : `Pregunta ${numeroPregunta}`
+    },
+    esHoy(dateString) {
+      if (!dateString) return false
+      const fechaRespuesta = new Date(dateString).toDateString()
+      const hoy = new Date().toDateString()
+      return fechaRespuesta === hoy
+    },
+    limpiarFiltros() {
+      this.nombreFilter = ''
+      this.fechaFilter = ''
     }
   },
   created() {
@@ -136,109 +216,5 @@ export default {
 </script>
 
 <style scoped>
-.responses-view {
-  padding: 30px;
-  font-family: 'Segoe UI', sans-serif;
-}
 
-.page-title {
-  font-size: 28px;
-  margin-bottom: 20px;
-  color: #333;
-  text-align: center;
-}
-
-.responses-layout {
-  display: flex;
-  gap: 30px;
-  flex-wrap: wrap;
-}
-
-.responses-list {
-  width: 320px;
-  display: flex;
-  flex-direction: column;
-}
-
-.response-card {
-  padding: 15px;
-  margin-bottom: 12px;
-  border: 1px solid #ccc;
-  background-color: #ffffff;
-  cursor: pointer;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-  transition: background-color 0.2s, border-color 0.2s;
-}
-.response-card:hover {
-  background-color: #f5faff;
-  border-color: #007bff;
-}
-.response-card.active {
-  background-color: #e0f0ff;
-  border-color: #0056b3;
-}
-
-.response-details {
-  flex-grow: 1;
-  min-width: 400px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 20px;
-  background: #fafafa;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.detail-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.investigator-info {
-  margin-top: 15px;
-}
-
-.info-item {
-  margin: 10px 0;
-  display: flex;
-  gap: 10px;
-}
-
-.label {
-  font-weight: bold;
-  width: 120px;
-}
-
-.answers-section {
-  margin-top: 25px;
-}
-
-.answers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 15px;
-}
-
-.answer-item {
-  background: #ffffff;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-}
-
-.question-number {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
-.empty-state {
-  flex-grow: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-style: italic;
-  color: #888;
-  min-height: 200px;
-}
 </style>
