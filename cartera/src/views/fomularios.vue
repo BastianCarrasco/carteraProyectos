@@ -101,6 +101,11 @@
 
 <script>
 import '../assets/Proyecto_styles/respuestas_formu.css'
+const respuestasUrl = VITE_API_URL_RESPUESTAS
+const academicosUrl = VITE_API_URL_ACADEMICOS
+const unidadesUrl = VITE_API_URL_UA
+const cuestionariosUrl = VITE_API_URL_CUESTIONARIOS
+
 export default {
   data() {
     return {
@@ -155,10 +160,10 @@ export default {
     async cargarDatos() {
       try {
         const [respuestasRes, academicosRes, unidadesRes, preguntasRes] = await Promise.all([
-          fetch('https://kth2025backend-production.up.railway.app/respuestas-cuestionarios'),
-          fetch('https://kth2025backend-production.up.railway.app/academicos'),
-          fetch('https://kth2025backend-production.up.railway.app/ua'),
-          fetch('https://kth2025backend-production.up.railway.app/cuestionarios')
+          fetch(respuestasUrl),
+          fetch(academicosUrl),
+          fetch(unidadesUrl),
+          fetch(cuestionariosUrl)
         ])
 
         const respuestasJson = await respuestasRes.json()
