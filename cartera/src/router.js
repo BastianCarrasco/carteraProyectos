@@ -6,7 +6,7 @@ import Statistics from "./views/Statistics.vue";
 import Home from "./views/Home.vue";
 import Doc from "./views/documents.vue";
 import Formularios from "./views/fomularios.vue";
-//import evaluacion from "./views/evaluacion.vue";
+import Eval from "./views/Eval.vue";
 
 const routes = [
   { path: "/", component: Home },
@@ -16,7 +16,7 @@ const routes = [
   { path: "/statistics", component: Statistics },
   { path: "/documents", component: Doc },
   { path: "/formularios", component: Formularios },
- // { path: "/evaluacion", component: evaluacion },
+  { path: "/eval", component: Eval },
 ];
 
 const router = createRouter({
