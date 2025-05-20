@@ -17,9 +17,9 @@
         <font-awesome-icon :icon="faChartBar" /> Formularios
       </router-link>
 
-      <router-link to="/evaluacion" class="nav-link">
+      <!-- <router-link to="/evaluacion" class="nav-link">
         <font-awesome-icon :icon="faChartBar" /> Evaluación
-      </router-link>
+      </router-link> -->
 
 
     </div>
