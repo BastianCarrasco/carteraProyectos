@@ -39,7 +39,7 @@
             }]"
           >
             <div class="card-header">
-              <div class="investigator">{{ obtenerNombreAcademico(respuesta.nombre_investigador) }}</div>
+              <div style="color: black;" class="investigator">{{ obtenerNombreAcademico(respuesta.nombre_investigador) }}</div>
               <span v-if="esHoy(respuesta.fecha_creacion)" class="today-badge">Hoy</span>
             </div>
             <div class="school">🏫 Escuela: {{ obtenerNombreEscuela(respuesta.escuela) }}</div>
