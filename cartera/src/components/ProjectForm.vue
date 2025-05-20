@@ -264,7 +264,7 @@ export default {
 
         console.log('Datos que se enviarán al servidor:', JSON.stringify(postData, null, 2));
 
-        const response = await fetch(proyectosUrl, {
+        const response = await fetch('https://kth2025backend-production.up.railway.app/proyecto', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
