@@ -101,10 +101,10 @@
 
 <script>
 import '../assets/Proyecto_styles/respuestas_formu.css'
-const respuestasUrl = VITE_API_URL_RESPUESTAS
-const academicosUrl = VITE_API_URL_ACADEMICOS
-const unidadesUrl = VITE_API_URL_UA
-const cuestionariosUrl = VITE_API_URL_CUESTIONARIOS
+const respuestasUrl = import.meta.env.VITE_API_URL_RESPUESTAS
+const academicosUrl = import.meta.env.VITE_API_URL_ACADEMICOS
+const unidadesUrl = import.meta.env.VITE_API_URL_UA
+const cuestionariosUrl = import.meta.env.VITE_API_URL_CUESTIONARIOS
 
 export default {
   data() {
