@@ -252,8 +252,7 @@ export default {
       this.submitMessage = '';
 
       try {
-        const url = proyectosUrl;
-
+        
         const postData = {
           nombre: this.formData.nombre.trim(),
           monto: Number(this.formData.monto),
@@ -265,7 +264,7 @@ export default {
 
         console.log('Datos que se enviarán al servidor:', JSON.stringify(postData, null, 2));
 
-        const response = await fetch(url, {
+        const response = await fetch(proyectosUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
