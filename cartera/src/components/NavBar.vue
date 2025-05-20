@@ -13,9 +13,15 @@
       <router-link to="/statistics" class="nav-link">
         <font-awesome-icon :icon="faChartBar" /> Estadísticas
       </router-link>
-        <router-link to="/formularios" class="nav-link">
+      <router-link to="/formularios" class="nav-link">
         <font-awesome-icon :icon="faChartBar" /> Formularios
       </router-link>
+
+      <router-link to="/evaluacion" class="nav-link">
+        <font-awesome-icon :icon="faChartBar" /> Evaluación
+      </router-link>
+
+
     </div>
     <router-link to="/documents" class="nav-link documents-link">
       <font-awesome-icon :icon="faFileAlt" /> Documentos
@@ -25,12 +31,12 @@
 
 <script setup>
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { 
-  faHouse, 
-  faProjectDiagram, 
-  faPlusCircle, 
-  faChartBar, 
-  faFileAlt 
+import {
+  faHouse,
+  faProjectDiagram,
+  faPlusCircle,
+  faChartBar,
+  faFileAlt
 } from '@fortawesome/free-solid-svg-icons'
 </script>
 
@@ -112,19 +118,20 @@ import {
     padding: 1rem;
     gap: 0.5rem;
   }
-  
+
   .nav-left {
     flex-direction: column;
     width: 100%;
     gap: 0.5rem;
   }
-  
-  .nav-link, .documents-link {
+
+  .nav-link,
+  .documents-link {
     width: 100%;
     justify-content: center;
     padding: 0.75rem;
   }
-  
+
   .documents-link {
     margin-top: 0.5rem;
   }
