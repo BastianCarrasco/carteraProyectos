@@ -57,6 +57,11 @@
 
 <script>
 
+const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS
+const academicosUrl = import.meta.env.VITE_API_URL_ACADEMICOS
+const proyectoAcademicoUrl = import.meta.env.VITE_API_URL_ACADEMICOS_PROYECTOS
+
+
 export default {
   name: 'ProjectsView',
   data() {
@@ -106,12 +111,12 @@ export default {
     async cargarDatos() {
       try {
         // Obtener datos de proyectos
-        const proyectosResponse = await fetch('https://kth2025backend-production.up.railway.app/proyectos');
+        const proyectosResponse = await fetch(proyectosUrl);
         const proyectosData = await proyectosResponse.json();
         this.proyectos = proyectosData.data;
 
         // Obtener datos de académicos
-        const academicosResponse = await fetch('https://kth2025backend-production.up.railway.app/academicos');
+        const academicosResponse = await fetch(academicosUrl);
         const academicosData = await academicosResponse.json();
         this.academicos = academicosData.data;
 
@@ -131,7 +136,7 @@ export default {
     },
     async crearConexion() {
       try {
-        const response = await fetch('https://kth2025backend-production.up.railway.app/proyecto-academico', {
+        const response = await fetch(proyectoAcademicoUrl, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

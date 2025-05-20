@@ -100,6 +100,7 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'; // Añadidos watch y nextTick
 import { Chart, registerables } from 'chart.js';
 import '../assets/Proyecto_styles/estadisticas.css';
+const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS
 
 // Registra los componentes de Chart.js
 Chart.register(...registerables);
@@ -127,7 +128,7 @@ const fetchData = async () => {
     loading.value = true;
     error.value = null;
     
-    const response = await fetch('https://kth2025backend-production.up.railway.app/proyectos');
+    const response = await fetch(proyectosUrl);
     
     if (!response.ok) {
       throw new Error(`Error HTTP: ${response.status}`);

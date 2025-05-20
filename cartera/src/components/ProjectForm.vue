@@ -101,6 +101,10 @@
 
 <script>
 import '../assets/Proyecto_styles/Form.css'
+const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS
+const conovocatoriasUrl = import.meta.env.VITE_API_URL_CONVOCATORIAS
+const unidadAcesUrl = import.meta.env.VITE_API_URL_UA
+
 
 export default {
   name: 'ProjectForm',
@@ -149,8 +153,8 @@ export default {
       this.loading = true;
       try {
         const [resUA, resConv] = await Promise.all([
-          fetch('https://kth2025backend-production.up.railway.app/ua'),
-          fetch('https://kth2025backend-production.up.railway.app/convocatorias')
+          fetch(unidadAcesUrl),
+          fetch(conovocatoriasUrl)
         ]);
 
         if (!resUA.ok || !resConv.ok) {
@@ -248,7 +252,7 @@ export default {
       this.submitMessage = '';
 
       try {
-        const url = 'https://kth2025backend-production.up.railway.app/proyecto';
+        const url = proyectosUrl;
 
         const postData = {
           nombre: this.formData.nombre.trim(),
