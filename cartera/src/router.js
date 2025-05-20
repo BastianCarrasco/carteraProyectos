@@ -5,6 +5,7 @@ import Edit from './views/Edit.vue'
 import Statistics from './views/Statistics.vue'
 import Home from './views/Home.vue'
 import Doc from './views/documents.vue'
+import Formularios from './views/fomularios.vue'
 
 const routes = [
   { path: '/', component: Home },
@@ -13,6 +14,7 @@ const routes = [
   { path: '/edit/:id', component: Edit, props: true },
   { path: '/statistics', component: Statistics },
   { path: '/documents', component: Doc },
+  {path: '/formularios', component: Formularios},
 ]
 
 const router = createRouter({
