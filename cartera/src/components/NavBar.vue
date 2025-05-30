@@ -20,12 +20,7 @@
       <router-link to="/eval" class="nav-link">
         <font-awesome-icon :icon="faChartBar" /> Fondos
       </router-link>
-      
-
-
-      
-
-
+  
     </div>
     <router-link to="/documents" class="nav-link documents-link">
       <font-awesome-icon :icon="faFileAlt" /> Documentos
@@ -47,7 +42,7 @@ import {
 <style scoped>
 .navbar {
   background: linear-gradient(135deg, #2c3e50 0%, #1a2a3a 100%);
-  padding: 1rem 2rem;
+  padding: 1rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
