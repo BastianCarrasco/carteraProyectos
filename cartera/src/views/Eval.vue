@@ -29,11 +29,13 @@
                     </select>
                 </div>
 
+                <!-- Sustituido filtro Plazo por Vigentes -->
                 <div class="filter-group">
-                    <label>Plazo:</label>
-                    <select v-model="filters.plazo">
+                    <label>Vigentes:</label>
+                    <select v-model="filters.vigente">
                         <option :value="null">Todos</option>
-                        <option v-for="p in plazosUnicos" :value="p">{{ p }}</option>
+                        <option :value="true">Sí</option>
+                        <option :value="false">No</option>
                     </select>
                 </div>
 
@@ -80,7 +82,7 @@
                             </div>
                             <div class="meta-item">
                                 <i class="fas fa-calendar-alt"></i>
-                                <span><strong>Plazo:</strong> {{ fondo.plazo }}</span>
+                                <span><strong>Duración del Instrumentió:</strong> {{ fondo.plazo }}</span>
                             </div>
                         </div>
 
@@ -123,6 +125,7 @@
 </template>
 
 <script>
+import '../assets/Proyecto_styles/fondos.css'
 
 export default {
     data() {
@@ -134,7 +137,7 @@ export default {
                 tipoFondo: null,
                 tipo: null,
                 trl: null,
-                plazo: null
+                vigente: null // Nuevo filtro
             },
             tipoNames: {
                 1: 'Innovación Productiva',
@@ -150,11 +153,20 @@ export default {
                     fondo.nombre.toLowerCase().includes(this.searchText.toLowerCase()) ||
                     fondo.objetivo.toLowerCase().includes(this.searchText.toLowerCase())
 
+                // Vigencia: true si hoy está entre inicio y cierre (inclusive)
+                let vigente = false
+                if (fondo.inicio && fondo.cierre) {
+                    const hoy = new Date()
+                    const inicio = new Date(fondo.inicio)
+                    const cierre = new Date(fondo.cierre)
+                    vigente = hoy >= inicio && hoy <= cierre
+                }
+
                 const matchesFilters = (
                     (this.filters.tipoFondo === null || fondo['tipo de fondo'] === this.filters.tipoFondo) &&
                     (this.filters.tipo === null || fondo.tipo === this.filters.tipo) &&
                     (this.filters.trl === null || fondo.trl === this.filters.trl) &&
-                    (this.filters.plazo === null || fondo.plazo === this.filters.plazo)
+                    (this.filters.vigente === null || vigente === this.filters.vigente)
                 )
 
                 return matchesSearch && matchesFilters
@@ -174,13 +186,6 @@ export default {
                     .map(f => f.tipo)
                     .filter(Boolean)
             )].sort()
-        },
-        plazosUnicos() {
-            return [...new Set(this.fondos.map(f => f.plazo).filter(Boolean))].sort((a, b) => {
-                const numA = parseInt(a)
-                const numB = parseInt(b)
-                return numA - numB
-            })
         }
     },
     methods: {
@@ -223,7 +228,7 @@ export default {
                 tipoFondo: null,
                 tipo: null,
                 trl: null,
-                plazo: null
+                vigente: null
             }
             this.searchText = ''
         }
@@ -237,274 +242,4 @@ export default {
 <style scoped>
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
 
-.fondos-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.title {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 30px;
-    font-size: 2.2rem;
-    font-weight: 600;
-}
-
-.filters-container {
-    background: #f8f9fa;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-}
-
-.filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    margin-bottom: 15px;
-}
-
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    min-width: 180px;
-}
-
-.filter-group label {
-    font-weight: 600;
-    color: #495057;
-    font-size: 0.9rem;
-}
-
-select,
-input {
-    padding: 10px 12px;
-    border: 1px solid #ced4da;
-    border-radius: 6px;
-    background: white;
-    font-size: 0.9rem;
-}
-
-.reset-btn {
-    padding: 10px 15px;
-    background: #6c757d;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s;
-    align-self: flex-end;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.reset-btn:hover {
-    background: #5a6268;
-}
-
-.search-box {
-    position: relative;
-    max-width: 400px;
-}
-
-.search-box input {
-    width: 100%;
-    padding-left: 35px;
-}
-
-.search-box i {
-    position: absolute;
-    left: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #6c757d;
-}
-
-.loading,
-.no-results {
-    text-align: center;
-    padding: 40px;
-    font-size: 1.1rem;
-    color: #6c757d;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.loading i,
-.no-results i {
-    font-size: 1.5rem;
-    color: #3498db;
-}
-
-.results-info {
-    color: #6c757d;
-    margin-bottom: 15px;
-    font-size: 0.9rem;
-}
-
-.fondos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-    gap: 25px;
-}
-
-.fondo-card {
-    background: white;
-    border-radius: 10px;
-    padding: 25px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s, box-shadow 0.3s;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-.fondo-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.fondo-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 10px;
-}
-
-.fondo-header h2 {
-    margin: 0;
-    color: #2c3e50;
-    font-size: 1.3rem;
-    flex: 1;
-}
-
-.fondo-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: white;
-}
-
-.anid-badge {
-    background: #3498db;
-}
-
-.corfo-badge {
-    background: #e74c3c;
-}
-
-.pucv-badge {
-    background: #9b59b6;
-}
-
-.fondo-meta,
-.fondo-dates {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.meta-item,
-.date-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: #495057;
-    font-size: 0.9rem;
-}
-
-.meta-item i,
-.date-item i {
-    color: #7f8c8d;
-    width: 16px;
-    text-align: center;
-}
-
-.fondo-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.tag {
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.tag.trl {
-    background: #e3f2fd;
-    color: #1976d2;
-}
-
-.tag.tipo {
-    background: #e8f5e9;
-    color: #388e3c;
-}
-
-.fondo-content h3 {
-    color: #2c3e50;
-    font-size: 1.1rem;
-    margin: 15px 0 10px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.fondo-content h3 i {
-    color: #7f8c8d;
-    font-size: 0.9rem;
-}
-
-.fondo-content p {
-    color: #495057;
-    line-height: 1.6;
-    margin: 0;
-}
-
-.fondo-req ul {
-    margin: 10px 0 0 0;
-    padding-left: 20px;
-}
-
-.fondo-req li {
-    color: #495057;
-    margin-bottom: 5px;
-    line-height: 1.5;
-    font-size: 0.9rem;
-}
-
-@media (max-width: 768px) {
-    .filters {
-        flex-direction: column;
-    }
-
-    .filter-group {
-        min-width: 100%;
-    }
-
-    .search-box {
-        max-width: 100%;
-    }
-
-    .fondos-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .fondo-card {
-        padding: 20px;
-    }
-}
 </style>

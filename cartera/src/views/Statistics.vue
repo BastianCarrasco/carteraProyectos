@@ -1,7 +1,5 @@
 <template>
   <div class="stats-container">
-   
-    
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
       <p>Cargando datos...</p>
@@ -18,28 +16,28 @@
         <!-- Tarjeta 1: Total de proyectos -->
         <div class="stat-card">
           <div class="stat-value">{{ totalProjects }}</div>
-          <div class="stat-label">Proyectos Totales</div>
+          <div class="stat-label">Proyectos en Cartera</div>
           <div class="stat-icon">📊</div>
         </div>
         
         <!-- Tarjeta 2: Monto total invertido -->
         <div class="stat-card">
-          <div class="stat-value">{{ formatCurrency(totalAmount) }}</div>
+          <div class="stat-value">{{ formatMillions(totalAmount) }}</div>
           <div class="stat-label">Inversión Total</div>
           <div class="stat-icon">💰</div>
         </div>
         
         <!-- Tarjeta 3: Número de académicos involucrados -->
         <div class="stat-card">
-          <div class="stat-value">{{ uniqueAcademics.length }}</div>
-          <div class="stat-label">Académicos Involucrados</div>
+          <div class="stat-value">{{ uniqueLeaders.length }}</div>
+          <div class="stat-label">Académicos Líderes</div>
           <div class="stat-icon">👨‍🏫</div>
         </div>
         
         <!-- Tarjeta 4: Proyectos por facultad -->
         <div class="stat-card">
           <div class="stat-value">{{ faculties.length }}</div>
-          <div class="stat-label">Facultades Participantes</div>
+          <div class="stat-label">Unidades Académicas</div>
           <div class="stat-icon">🏛️</div>
         </div>
       </div>
@@ -55,41 +53,30 @@
         
         <!-- Gráfico 2: Monto por facultad -->
         <div class="chart-card">
-          <h2>Inversión por Facultad</h2>
+          <h2>Montos Postulados por Unidad Académica</h2>
           <div class="chart-wrapper">
             <canvas ref="facultyChart"></canvas>
           </div>
         </div>
         
-        <!-- Gráfico 3: Proyectos por año -->
-<div class="chart-card">
-  <h2>Proyectos por Facultad</h2>
-  <div class="chart-wrapper">
-    <canvas ref="projectsFacultyChart"></canvas>
-  </div>
-</div>
+        <!-- Gráfico 3: Proyectos por facultad -->
+        <div class="chart-card">
+          <h2>Proyectos por Unidad Académica</h2>
+          <div class="chart-wrapper">
+            <canvas ref="projectsFacultyChart"></canvas>
+          </div>
+        </div>
         
-        <!-- Tabla de líderes de proyectos -->
+        <!-- Listado de Unidades Académicas -->
         <div class="table-card">
-          <h2>Académicos con más Proyectos</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Académico</th>
-                <th>Proyectos como Jefe</th>
-                <th>Proyectos Participantes</th>
-                <th>Monto Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="academic in topAcademics" :key="academic.name">
-                <td>{{ academic.name }}</td>
-                <td>{{ academic.asLeader }}</td>
-                <td>{{ academic.asParticipant }}</td>
-                <td>{{ formatCurrency(academic.totalAmount) }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <h2>Unidades Académicas Participantes</h2>
+          <div class="faculty-list">
+            <div v-for="faculty in sortedFaculties" :key="faculty.name" class="faculty-item">
+              <span class="faculty-name">{{ faculty.name }}</span>
+              <span class="faculty-count">{{ faculty.count }} proyectos</span>
+              <span class="faculty-amount">{{ formatMillions(faculty.amount) }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -97,50 +84,42 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, nextTick } from 'vue'; // Añadidos watch y nextTick
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { Chart, registerables } from 'chart.js';
 import '../assets/Proyecto_styles/estadisticas.css';
-const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS
 
-// Registra los componentes de Chart.js
 Chart.register(...registerables);
 
-// Referencias para los gráficos
+const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS;
 const typeChart = ref(null);
 const facultyChart = ref(null);
-const yearChart = ref(null);
+const projectsFacultyChart = ref(null);
 
-// Estado de la aplicación
 const proyectos = ref([]);
 const loading = ref(true);
 const error = ref(null);
-const projectsFacultyChart = ref(null);
 
-
-// Método para formatear moneda
+// Métodos de formato
 const formatCurrency = (amount) => {
   return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(amount);
 };
 
-// Método para obtener datos de la API
+const formatMillions = (amount) => {
+  return `${Math.round(amount / 1000000)}M`;
+};
+
+// Obtener datos
 const fetchData = async () => {
   try {
     loading.value = true;
     error.value = null;
-    
     const response = await fetch(proyectosUrl);
     
-    if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
     
     const data = await response.json();
-    
-    if (data.success && data.data) {
-      proyectos.value = data.data;
-    } else {
-      throw new Error('Formato de datos inesperado');
-    }
+    proyectos.value = data.success ? data.data : [];
+    if (!proyectos.value.length) throw new Error('No hay datos disponibles');
   } catch (err) {
     error.value = `Error al cargar los datos: ${err.message}`;
     console.error('Error fetching data:', err);
@@ -151,201 +130,203 @@ const fetchData = async () => {
 
 // Estadísticas computadas
 const totalProjects = computed(() => {
-  const uniqueIds = new Set(proyectos.value.map(p => p.id_proyecto));
-  return uniqueIds.size;
+  return new Set(proyectos.value.map(p => p.id_proyecto)).size;
 });
 
 const totalAmount = computed(() => {
-  return proyectos.value.reduce((sum, proyecto) => sum + (proyecto.monto || 0), 0);
+  return proyectos.value.reduce((sum, p) => sum + (p.monto || 0), 0);
 });
 
-const uniqueAcademics = computed(() => {
-  const academics = new Set(proyectos.value.map(p => p.Academico));
-  return Array.from(academics);
+const uniqueLeaders = computed(() => {
+  const leaders = proyectos.value.filter(p => p.jefe === 1);
+  return [...new Set(leaders.map(p => p.Academico))];
 });
 
 const faculties = computed(() => {
-  const facs = new Set(proyectos.value.map(p => p.UA));
-  return Array.from(facs);
+  return [...new Set(proyectos.value.map(p => p.UA))];
 });
 
-const topAcademics = computed(() => {
-  const academicMap = {};
+const sortedFaculties = computed(() => {
+  const facultyData = {};
   
-  proyectos.value.forEach(proyecto => {
-    if (!academicMap[proyecto.Academico]) {
-      academicMap[proyecto.Academico] = {
-        name: proyecto.Academico,
-        asLeader: 0,
-        asParticipant: 0,
-        totalAmount: 0
+  proyectos.value.forEach(p => {
+    if (!facultyData[p.UA]) {
+      facultyData[p.UA] = {
+        name: p.UA,
+        count: 0,
+        amount: 0
       };
     }
-    
-    if (proyecto.jefe === 1) {
-      academicMap[proyecto.Academico].asLeader++;
-    } else {
-      academicMap[proyecto.Academico].asParticipant++;
+    facultyData[p.UA].amount += p.monto || 0;
+    // Contar proyectos únicos por facultad
+    if (!facultyData[p.UA].projectIds) {
+      facultyData[p.UA].projectIds = new Set();
     }
-    
-    academicMap[proyecto.Academico].totalAmount += proyecto.monto || 0;
+    facultyData[p.UA].projectIds.add(p.id_proyecto);
   });
   
-  return Object.values(academicMap)
-    .sort((a, b) => (b.asLeader + b.asParticipant) - (a.asLeader + a.asParticipant))
-    .slice(0, 5);
+  // Convertir Set a count
+  Object.keys(facultyData).forEach(key => {
+    facultyData[key].count = facultyData[key].projectIds.size;
+    delete facultyData[key].projectIds;
+  });
+  
+  return Object.values(facultyData)
+    .sort((a, b) => b.amount - a.amount);
 });
 
 // Datos para gráficos
 const typeDistribution = computed(() => {
   const types = {};
-  proyectos.value.forEach(proyecto => {
-    const type = proyecto.Tipo_Convo;
-    types[type] = (types[type] || 0) + 1;
+  proyectos.value.forEach(p => {
+    types[p.Tipo_Convo] = (types[p.Tipo_Convo] || 0) + 1;
   });
   return types;
 });
 
 const facultyAmounts = computed(() => {
   const amounts = {};
-  proyectos.value.forEach(proyecto => {
-    amounts[proyecto.UA] = (amounts[proyecto.UA] || 0) + (proyecto.monto || 0);
+  proyectos.value.forEach(p => {
+    amounts[p.UA] = (amounts[p.UA] || 0) + (p.monto || 0);
   });
   return amounts;
 });
 
-
-
-const projectsByYear = computed(() => {
-  const years = {};
-  proyectos.value.forEach(proyecto => {
-    if (proyecto.fecha_postulacion) {
-      const year = new Date(proyecto.fecha_postulacion).getFullYear();
-      years[year] = (years[year] || 0) + 1;
+const projectsByFaculty = computed(() => {
+  const counts = {};
+  const projectIds = new Set();
+  
+  // Primero identificamos todos los proyectos únicos
+  proyectos.value.forEach(p => projectIds.add(p.id_proyecto));
+  
+  // Luego contamos por facultad
+  const facultyProjects = {};
+  projectIds.forEach(id => {
+    const proyecto = proyectos.value.find(p => p.id_proyecto === id);
+    if (proyecto) {
+      facultyProjects[proyecto.UA] = (facultyProjects[proyecto.UA] || 0) + 1;
     }
   });
-  return years;
+  
+  return facultyProjects;
 });
 
-// Inicializar gráficos cuando los datos estén cargados
-onMounted(() => {
-  fetchData();
-});
+// Inicialización y renderizado de gráficos
+onMounted(fetchData);
 
-// Observar cambios en los datos para renderizar gráficos
 watch(proyectos, (newVal) => {
   if (newVal.length > 0) {
-    nextTick(() => {
-      renderCharts();
-    });
+    nextTick(renderCharts);
   }
 }, { immediate: true });
 
 const renderCharts = () => {
-  // Destruir gráficos existentes si hay alguno
-   // Destruir gráficos existentes si hay alguno
-  if (typeChart.value && typeChart.value._chart) {
-    typeChart.value._chart.destroy();
-  }
-  if (facultyChart.value && facultyChart.value._chart) {
-    facultyChart.value._chart.destroy();
-  }
-  if (yearChart.value && yearChart.value._chart) {
-    yearChart.value._chart.destroy();
-  }
-
-  if (projectsFacultyChart.value && projectsFacultyChart.value._chart) {
-  projectsFacultyChart.value._chart.destroy();
-}
-
-if (projectsFacultyChart.value) {
-  new Chart(projectsFacultyChart.value.getContext('2d'), {
-    type: 'bar',
-    data: {
-      labels: Object.keys(projectsByFaculty.value),
-      datasets: [{
-        label: 'Cantidad de Proyectos',
-        data: Object.values(projectsByFaculty.value),
-        backgroundColor: '#FF9F40'
-      }]
-    },
-    options: {
-      indexAxis: 'y', // Puedes quitar esta línea si prefieres barras verticales
-      scales: {
-        x: {
-          beginAtZero: true
-        }
-      }
-    }
+  // Limpiar gráficos anteriores
+  [typeChart, facultyChart, projectsFacultyChart].forEach(chartRef => {
+    if (chartRef.value?._chart) chartRef.value._chart.destroy();
   });
-}
 
-
-  
-
-  // Gráfico de tipos de convocatoria
+  // Gráfico de tipos de convocatoria con porcentajes
   if (typeChart.value) {
+    const typeData = typeDistribution.value;
+    const total = Object.values(typeData).reduce((a, b) => a + b, 0);
+    
     new Chart(typeChart.value.getContext('2d'), {
       type: 'pie',
       data: {
-        labels: Object.keys(typeDistribution.value),
+        labels: Object.keys(typeData).map(label => `${label} (${((typeData[label]/total)*100).toFixed(1)}%)`),
         datasets: [{
-          data: Object.values(typeDistribution.value),
-          backgroundColor: [
-            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'
-          ]
-        }]
-      }
-    });
-  }
-
-  // Gráfico de montos por facultad
-  if (facultyChart.value) {
-    new Chart(facultyChart.value.getContext('2d'), {
-      type: 'bar',
-      data: {
-        labels: Object.keys(facultyAmounts.value),
-        datasets: [{
-          label: 'Monto Total (CLP)',
-          data: Object.values(facultyAmounts.value),
-          backgroundColor: '#4BC0C0'
+          data: Object.values(typeData),
+          backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF']
         }]
       },
       options: {
-        scales: {
-          y: {
-            beginAtZero: true
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const label = context.label || '';
+                const value = context.raw || 0;
+                const percentage = ((value / total) * 100).toFixed(1);
+                return `${label.split(' (')[0]}: ${value} (${percentage}%)`;
+              }
+            }
           }
         }
       }
     });
   }
 
-  // Gráfico de proyectos por año
-  if (yearChart.value) {
-    new Chart(yearChart.value.getContext('2d'), {
-      type: 'line',
+  // Gráfico de montos por facultad
+  if (facultyChart.value) {
+    const facultyData = facultyAmounts.value;
+    const sortedEntries = Object.entries(facultyData)
+      .sort((a, b) => b[1] - a[1]);
+    
+    new Chart(facultyChart.value.getContext('2d'), {
+      type: 'bar',
       data: {
-        labels: Object.keys(projectsByYear.value).sort(),
+        labels: sortedEntries.map(([name]) => name),
         datasets: [{
-          label: 'Proyectos',
-          data: Object.keys(projectsByYear.value).sort().map(year => projectsByYear.value[year]),
-          borderColor: '#36A2EB',
-          fill: false
+          label: 'Monto Total (CLP)',
+          data: sortedEntries.map(([_, amount]) => amount),
+          backgroundColor: '#4BC0C0'
         }]
+      },
+      options: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return formatMillions(value);
+              }
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `${context.dataset.label}: ${formatCurrency(context.raw)}`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Gráfico de proyectos por facultad
+  if (projectsFacultyChart.value) {
+    const facultyData = projectsByFaculty.value;
+    const sortedEntries = Object.entries(facultyData)
+      .sort((a, b) => b[1] - a[1]);
+    
+    new Chart(projectsFacultyChart.value.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: sortedEntries.map(([name]) => name),
+        datasets: [{
+          label: 'Cantidad de Proyectos',
+          data: sortedEntries.map(([_, count]) => count),
+          backgroundColor: '#FF9F40'
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
+        }
       }
     });
   }
 };
-
-const projectsByFaculty = computed(() => {
-  const counts = {};
-  proyectos.value.forEach(proyecto => {
-    const faculty = proyecto.UA;
-    counts[faculty] = (counts[faculty] || 0) + 1;
-  });
-  return counts;
-});
 </script>
 
 <style scoped>

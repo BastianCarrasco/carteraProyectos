@@ -2,8 +2,10 @@
   padding: 2rem;
   font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   background-color: #f8f9fa;
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%; /* Ocupa el 100% del ancho disponible */
+  max-width: none; /* Elimina cualquier limitación de ancho máximo */
+  margin: 0; /* Elimina los márgenes automáticos que centraban el contenido */
+  box-sizing: border-box; /* Incluye el padding en el cálculo del ancho */
 }
 
 .header {

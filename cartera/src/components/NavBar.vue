@@ -5,22 +5,30 @@
         <font-awesome-icon :icon="faHouse" /> Home
       </router-link>
       <router-link to="/projects" class="nav-link">
-        <font-awesome-icon :icon="faProjectDiagram" /> Proyectos
+        <font-awesome-icon :icon="faProjectDiagram" /> Visualización de Proyectos
       </router-link>
       <router-link to="/create" class="nav-link">
-        <font-awesome-icon :icon="faPlusCircle" /> Crear
+        <font-awesome-icon :icon="faPlusCircle" /> Cartera de Proyectos
       </router-link>
-      <router-link to="/statistics" class="nav-link">
-        <font-awesome-icon :icon="faChartBar" /> Estadísticas
-      </router-link>
-      <router-link to="/formularios" class="nav-link">
-        <font-awesome-icon :icon="faChartBar" /> Formularios
-      </router-link>
-
-      <router-link to="/eval" class="nav-link">
-        <font-awesome-icon :icon="faChartBar" /> Fondos
-      </router-link>
-  
+      
+      <!-- Menú desplegable -->
+      <div class="dropdown">
+        <button class="nav-link dropdown-toggle">
+          <font-awesome-icon :icon="faChartPie" /> Perfiles de Proyecto
+          <font-awesome-icon :icon="faChevronDown" class="dropdown-icon" />
+        </button>
+        <div class="dropdown-content">
+          <router-link to="/statistics" class="dropdown-item">
+            <font-awesome-icon :icon="faChartBar" /> Estadísticas
+          </router-link>
+          <router-link to="/formularios" class="dropdown-item">
+            <font-awesome-icon :icon="faClipboardList" /> Formularios
+          </router-link>
+          <router-link to="/eval" class="dropdown-item">
+            <font-awesome-icon :icon="faMoneyBillWave" /> Fondos
+          </router-link>
+        </div>
+      </div>
     </div>
     <router-link to="/documents" class="nav-link documents-link">
       <font-awesome-icon :icon="faFileAlt" /> Documentos
@@ -35,7 +43,11 @@ import {
   faProjectDiagram,
   faPlusCircle,
   faChartBar,
-  faFileAlt
+  faFileAlt,
+  faChevronDown,
+  faChartPie,
+  faClipboardList,
+  faMoneyBillWave
 } from '@fortawesome/free-solid-svg-icons'
 </script>
 
@@ -69,6 +81,8 @@ import {
   font-size: 1rem;
   font-weight: 500;
   backdrop-filter: blur(2px);
+  border: none;
+  cursor: pointer;
 }
 
 .nav-link:hover {
@@ -111,6 +125,63 @@ import {
   transform: scale(1.15);
 }
 
+/* Estilos para el menú desplegable */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-icon {
+  margin-left: 0.5rem;
+  transition: transform 0.3s ease;
+}
+
+.dropdown:hover .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: linear-gradient(135deg, #2c3e50 0%, #1a2a3a 100%);
+  min-width: 200px;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  z-index: 1;
+  top: 100%;
+  left: 0;
+  overflow: hidden;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown-item {
+  color: white;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding-left: 1.25rem;
+}
+
+.dropdown-item.router-link-active {
+  background-color: #42b983;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .navbar {
     flex-direction: column;
@@ -133,6 +204,16 @@ import {
 
   .documents-link {
     margin-top: 0.5rem;
+  }
+
+  .dropdown {
+    width: 100%;
+  }
+
+  .dropdown-content {
+    position: static;
+    width: 100%;
+    box-shadow: none;
   }
 }
 </style>
