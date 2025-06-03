@@ -47,7 +47,7 @@
     </div>
 
     <div v-else>
-      <div v-if="filteredProjects.length === 0" class="empty-state">
+      <div v-if="groupedProjects.length === 0" class="empty-state">
         <p>
           No se encontraron proyectos que coincidan con los criterios de
           búsqueda.
@@ -56,33 +56,32 @@
 
       <div class="project-list">
         <div
-          v-for="proyecto in filteredProjects"
-          :key="proyecto.id_proyecto"
+          v-for="proyecto in groupedProjects"
+          :key="proyecto.ids.join('-')"
           class="project-card"
-          :class="{ 'highlighted-project': proyecto.destacado }"
         >
           <div class="project-header">
             <h2 class="project-title">
               {{ proyecto.nombre || "Proyecto sin nombre" }}
             </h2>
             <div class="title-wrapper">
-              <!-- <span
+              <span
                 class="project-status"
-                :class="getStatusClass(proyecto.estado)"
+                :class="getStatusClass(proyecto.tipo)"
               >
-                {{ proyecto.estado || "Estado no especificado" }}
-              </span> -->
+                {{ proyecto.tipo || "Estado no especificado" }}
+              </span>
               <div class="logos">
                 <img
-                  :src="getLogoForTipo(proyecto.Tipo_Convo)"
-                  :alt="`Logo ${proyecto.Tipo_Convo}`"
+                  :src="getLogoForTipo(proyecto.tipo_convo)"
+                  :alt="`Logo ${proyecto.tipo_convo}`"
                   class="logo"
                   loading="lazy"
                 />
                 <!-- <img
-                  v-if="proyecto.Tipo_Convo !== 'GORE'"
-                  :src="getLogoForTipo(proyecto.Institucion_convocatoria)"
-                  :alt="`Logo ${proyecto.Institucion_convocatoria}`"
+                  v-if="proyecto.inst_convo && proyecto.inst_convo !== proyecto.tipo_convo"
+                  :src="getLogoForTipo(proyecto.inst_convo)"
+                  :alt="`Logo ${proyecto.inst_convo}`"
                   class="logo"
                   loading="lazy"
                 /> -->
@@ -93,33 +92,39 @@
           <div class="project-body">
             <div class="info-grid">
               <div class="info-item">
-                <h3 class="info-label">Academic@Lider</h3>
+                <h3 class="info-label">Académic@/s-Líder</h3>
                 <p class="info-content">
-                  {{
-                    proyecto.jefes.length > 0
-                      ? formatList(proyecto.jefes)
-                      : "No hay jefes asignados"
-                  }}
+                  {{ proyecto.academicos.join(', ') }}
+                  <!-- <span v-if="proyecto.jefe">(Líder: {{ proyecto.jefe }})</span> -->
                 </p>
               </div>
-              <!-- <div class="info-item">
-                <h3 class="info-label">Académicos asociados</h3>
-                <p class="info-content">
-                  {{ formatList(proyecto.academicos) || "No especificado" }}
-                </p>
-              </div> -->
 
               <div class="info-item">
                 <h3 class="info-label">Unidad Académica</h3>
                 <p class="info-content">
-                  {{ proyecto.UA || "No especificada" }}
+                  {{ proyecto.unidad || "No especificada" }}
+                </p>
+              </div>
+
+              <div class="info-item">
+                <h3 class="info-label">Temática</h3>
+                <p class="info-content">
+                  {{ proyecto.tematica || "No especificada" }}
                 </p>
               </div>
 
               <div class="info-item">
                 <h3 class="info-label">Monto total</h3>
                 <p class="info-content">
-                  {{ formatCurrency(proyecto.montoTotal) }}
+                  {{ formatCurrency(proyecto.monto) }}
+                </p>
+              </div>
+
+              <div class="info-item">
+                <h3 class="info-label">Tipo de apoyo</h3>
+                <p class="info-content">
+                  {{ proyecto.tipo_apoyo || "No especificado" }}
+                  <span v-if="proyecto.detalle">({{ proyecto.detalle }})</span>
                 </p>
               </div>
 
@@ -130,49 +135,16 @@
                 </p>
               </div>
 
-              <!-- <div class="info-item">
-                <h3 class="info-label">Duración</h3>
-                <p class="info-content">{{ formatDuration(proyecto.fecha_inicio) }}</p>
-              </div> -->
-
               <div class="info-item full-width">
-                <h3 class="info-label">Convocatorias</h3>
+                <h3 class="info-label">Convocatoria</h3>
                 <p class="info-content">
-                  {{ formatList(proyecto.convocatorias) || "No especificadas" }}
+                  {{ proyecto.convo_nombre || "No especificada" }}
                 </p>
               </div>
 
               <div class="info-item full-width" v-if="proyecto.comentarios">
                 <h3 class="info-label">Comentarios</h3>
                 <p class="info-content">{{ proyecto.comentarios }}</p>
-              </div>
-            </div>
-
-            <div
-              class="project-footer"
-              v-if="proyecto.enlaces || proyecto.documentos"
-            >
-              <div class="links" v-if="proyecto.enlaces">
-                <a
-                  v-for="(enlace, index) in proyecto.enlaces"
-                  :key="index"
-                  :href="enlace.url"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="link-button"
-                >
-                  {{ enlace.nombre || "Enlace externo" }}
-                </a>
-              </div>
-              <div class="documents" v-if="proyecto.documentos">
-                <button
-                  v-for="(doc, index) in proyecto.documentos"
-                  :key="index"
-                  @click="openDocument(doc)"
-                  class="doc-button"
-                >
-                  📄 {{ doc.nombre || "Documento" }}
-                </button>
               </div>
             </div>
           </div>
@@ -183,8 +155,8 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
-import "../../assets/Proyecto_styles/vistaProyectos.css";
+import { ref, computed } from "vue";
+import '../../assets/Proyecto_styles/vistaProyectos.css';
 
 const props = defineProps({
   proyectos: Array,
@@ -203,79 +175,24 @@ const sortAscending = ref(false);
 const uniqueTypes = computed(() => {
   const types = new Set();
   props.proyectos.forEach((p) => {
-    types.add(p.Tipo_Convo);
-    if (p.Institucion_convocatoria && p.Tipo_Convo !== "GORE") {
-      types.add(p.Institucion_convocatoria);
-    }
+    if (p.tipo_convo) types.add(p.tipo_convo);
+    if (p.inst_convo) types.add(p.inst_convo);
   });
   return Array.from(types).sort();
 });
 
-const groupedProjects = computed(() => {
-  const grouped = {};
-  props.proyectos.forEach((proyecto) => {
-    if (!grouped[proyecto.nombre]) {
-      grouped[proyecto.nombre] = {
-        ...proyecto,
-        jefes: new Set(), // Aquí irán los académicos con jefe = 1
-        academicos: new Set(), // Aquí irán los académicos con jefe = 0
-        montoTotal: 0,
-        convocatorias: new Set(),
-        enlaces: proyecto.enlaces || [],
-        documentos: proyecto.documentos || [],
-        destacado: proyecto.destacado || false,
-        estado: proyecto.estado || "En progreso",
-      };
-    }
-
-    // Modificamos esta parte para separar jefes de académicos
-    if (proyecto.Academico) {
-      if (proyecto.jefe === 1 || proyecto.jefe === true) {
-        grouped[proyecto.nombre].jefes.add(proyecto.Academico);
-      } else {
-        grouped[proyecto.nombre].academicos.add(proyecto.Academico);
-      }
-    }
-
-    grouped[proyecto.nombre].montoTotal += proyecto.monto || 0;
-    if (proyecto.Convocatoria)
-      grouped[proyecto.nombre].convocatorias.add(proyecto.Convocatoria);
-
-    // Fusionar enlaces y documentos si existen en proyectos duplicados
-    if (proyecto.enlaces) {
-      grouped[proyecto.nombre].enlaces = [
-        ...grouped[proyecto.nombre].enlaces,
-        ...proyecto.enlaces,
-      ];
-    }
-    if (proyecto.documentos) {
-      grouped[proyecto.nombre].documentos = [
-        ...grouped[proyecto.nombre].documentos,
-        ...proyecto.documentos,
-      ];
-    }
-  });
-
-  return Object.values(grouped).map((p) => ({
-    ...p,
-    jefes: Array.from(p.jefes),
-    academicos: Array.from(p.academicos),
-    convocatorias: Array.from(p.convocatorias),
-  }));
-});
-
 const filteredProjects = computed(() => {
-  let filtered = [...groupedProjects.value];
+  let filtered = [...props.proyectos];
 
   // Aplicar filtro de búsqueda
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     filtered = filtered.filter(
       (p) =>
-        p.nombre.toLowerCase().includes(query) ||
-        Array.from(p.academicos).some((a) => a.toLowerCase().includes(query)) ||
-        Array.from(p.jefes).some((j) => j.toLowerCase().includes(query)) ||
-        p.UA.toLowerCase().includes(query)
+        (p.nombre && p.nombre.toLowerCase().includes(query)) ||
+        (p.academico && p.academico.toLowerCase().includes(query)) ||
+        (p.unidad && p.unidad.toLowerCase().includes(query)) ||
+        (p.tematica && p.tematica.toLowerCase().includes(query))
     );
   }
 
@@ -283,8 +200,8 @@ const filteredProjects = computed(() => {
   if (selectedFilter.value) {
     filtered = filtered.filter(
       (p) =>
-        p.Tipo_Convo === selectedFilter.value ||
-        p.Institucion_convocatoria === selectedFilter.value
+        p.tipo_convo === selectedFilter.value ||
+        p.inst_convo === selectedFilter.value
     );
   }
 
@@ -298,21 +215,45 @@ const filteredProjects = computed(() => {
   return filtered;
 });
 
+const groupedProjects = computed(() => {
+  const projectsMap = new Map();
+  
+  filteredProjects.value.forEach(proyecto => {
+    if (!projectsMap.has(proyecto.nombre)) {
+      projectsMap.set(proyecto.nombre, {
+        ...proyecto,
+        academicos: [proyecto.academico],
+        hasJefe: proyecto.jefe === 1,
+        jefe: proyecto.jefe === 1 ? proyecto.academico : null,
+        ids: [proyecto.id_proyecto]
+      });
+    } else {
+      const existing = projectsMap.get(proyecto.nombre);
+      if (!existing.academicos.includes(proyecto.academico)) {
+        existing.academicos.push(proyecto.academico);
+      }
+      if (proyecto.jefe === 1) {
+        existing.hasJefe = true;
+        existing.jefe = proyecto.academico;
+      }
+      existing.ids.push(proyecto.id_proyecto);
+    }
+  });
+
+  return Array.from(projectsMap.values());
+});
+
 // Métodos
 const getLogoForTipo = (tipo) => {
   const logos = {
-    CORFO:
-      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSehNJ8c1LJpJ2z8Nr2XYscS09nWUlKwaulgA&s",
+    CORFO: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSehNJ8c1LJpJ2z8Nr2XYscS09nWUlKwaulgA&s",
     GORE: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVIux8ljUoTxTk5iZz3tjeY1bvO95MdNHSgg&s",
     ANID: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGM-cRJH0Ht6RvxzhqhjRjnISvlCibYJFnuQ&s",
     PRIVADA: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
-    CODESSER:
-      "https://yt3.googleusercontent.com/ytc/AIdro_nzFhzBeDsXQ3D7AF5rdL_n5us28Hn8hLUTSaK3xYwwtkU=s900-c-k-c0x00ffffff-no-rj",
+    CODESSER: "https://yt3.googleusercontent.com/ytc/AIdro_nzFhzBeDsXQ3D7AF5rdL_n5us28Hn8hLUTSaK3xYwwtkU=s900-c-k-c0x00ffffff-no-rj",
     SQM: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZbCTVM6AKaqYd5XuTWp8-VRuTkEsNQJaJBA&s",
-    "GORE-Valparaíso":
-      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Logo_GORE_Valparaiso.svg/1200px-Logo_GORE_Valparaiso.svg.png",
-    FONDECYT:
-      "https://www.anid.cl/wp-content/uploads/2021/07/logo-anid-2021.png",
+    "GORE-Valparaíso": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Logo_GORE_Valparaiso.svg/1200px-Logo_GORE_Valparaiso.svg.png",
+    FONDECYT: "https://www.anid.cl/wp-content/uploads/2021/07/logo-anid-2021.png",
     FONDAP: "https://www.anid.cl/wp-content/uploads/2021/07/logo-anid-2021.png",
     FONIS: "https://www.anid.cl/wp-content/uploads/2021/07/logo-anid-2021.png",
   };
@@ -335,27 +276,12 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString("es-CL", options);
 };
 
-const formatDuration = (start, end) => {
-  if (!start || !end) return "No especificada";
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  const diffMonths =
-    (endDate.getFullYear() - startDate.getFullYear()) * 12 +
-    (endDate.getMonth() - startDate.getMonth());
-  return `${diffMonths} meses (${formatDate(start)} - ${formatDate(end)})`;
-};
-
-const formatList = (items) => {
-  if (!items || items.length === 0) return "";
-  return items.join(", ");
-};
-
 const getStatusClass = (status) => {
   const statusClasses = {
-    "En progreso": "status-in-progress",
-    Finalizado: "status-completed",
-    Aprobado: "status-approved",
-    Rechazado: "status-rejected",
+    "Postulado": "status-in-progress",
+    "Finalizado": "status-completed",
+    "Aprobado": "status-approved",
+    "Rechazado": "status-rejected",
     "En revisión": "status-review",
   };
   return statusClasses[status] || "status-unknown";
@@ -363,12 +289,6 @@ const getStatusClass = (status) => {
 
 const toggleSort = () => {
   sortAscending.value = !sortAscending.value;
-};
-
-const openDocument = (doc) => {
-  // Aquí iría la lógica para abrir el documento
-  console.log("Abriendo documento:", doc);
-  // window.open(doc.url, '_blank');
 };
 </script>
 
