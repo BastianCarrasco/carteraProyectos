@@ -34,9 +34,9 @@
           <div class="stat-icon">👨‍🏫</div>
         </div>
         
-        <!-- Tarjeta 4: Proyectos por facultad -->
+        <!-- Tarjeta 4: Proyectos por unidad -->
         <div class="stat-card">
-          <div class="stat-value">{{ faculties.length }}</div>
+          <div class="stat-value">{{ units.length }}</div>
           <div class="stat-label">Unidades Académicas</div>
           <div class="stat-icon">🏛️</div>
         </div>
@@ -51,30 +51,30 @@
           </div>
         </div>
         
-        <!-- Gráfico 2: Monto por facultad -->
+        <!-- Gráfico 2: Monto por unidad académica -->
         <div class="chart-card">
           <h2>Montos Postulados por Unidad Académica</h2>
           <div class="chart-wrapper">
-            <canvas ref="facultyChart"></canvas>
+            <canvas ref="unitChart"></canvas>
           </div>
         </div>
         
-        <!-- Gráfico 3: Proyectos por facultad -->
+        <!-- Gráfico 3: Proyectos por unidad académica -->
         <div class="chart-card">
           <h2>Proyectos por Unidad Académica</h2>
           <div class="chart-wrapper">
-            <canvas ref="projectsFacultyChart"></canvas>
+            <canvas ref="projectsUnitChart"></canvas>
           </div>
         </div>
         
         <!-- Listado de Unidades Académicas -->
         <div class="table-card">
           <h2>Unidades Académicas Participantes</h2>
-          <div class="faculty-list">
-            <div v-for="faculty in sortedFaculties" :key="faculty.name" class="faculty-item">
-              <span class="faculty-name">{{ faculty.name }}</span>
-              <span class="faculty-count">{{ faculty.count }} proyectos</span>
-              <span class="faculty-amount">{{ formatMillions(faculty.amount) }}</span>
+          <div class="unit-list">
+            <div v-for="unit in sortedUnits" :key="unit.name" class="unit-item">
+              <span class="unit-name">{{ unit.name }}</span>
+              <span class="unit-count">{{ unit.count }} proyectos</span>
+              <span class="unit-amount">{{ formatMillions(unit.amount) }}</span>
             </div>
           </div>
         </div>
@@ -86,14 +86,13 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { Chart, registerables } from 'chart.js';
-import '../assets/Proyecto_styles/estadisticas.css';
 
 Chart.register(...registerables);
 
 const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS;
 const typeChart = ref(null);
-const facultyChart = ref(null);
-const projectsFacultyChart = ref(null);
+const unitChart = ref(null);
+const projectsUnitChart = ref(null);
 
 const proyectos = ref([]);
 const loading = ref(true);
@@ -108,21 +107,42 @@ const formatMillions = (amount) => {
   return `${Math.round(amount / 1000000)}M`;
 };
 
-// Obtener datos
+// Obtener datos - Versión mejorada
 const fetchData = async () => {
   try {
     loading.value = true;
     error.value = null;
+    
+    console.log(`Fetching data from: ${proyectosUrl}`);
     const response = await fetch(proyectosUrl);
     
-    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Error en la respuesta: ${response.status} ${response.statusText}`);
+    }
     
     const data = await response.json();
-    proyectos.value = data.success ? data.data : [];
-    if (!proyectos.value.length) throw new Error('No hay datos disponibles');
+    console.log('Datos recibidos:', data);
+    
+    // Manejar diferentes formatos de respuesta
+    if (Array.isArray(data)) {
+      proyectos.value = data;
+    } else if (data?.data && Array.isArray(data.data)) {
+      proyectos.value = data.data;
+    } else if (data?.success && data?.data && Array.isArray(data.data)) {
+      proyectos.value = data.data;
+    } else {
+      throw new Error('Formato de datos no reconocido');
+    }
+    
+    if (!proyectos.value.length) {
+      console.warn('API respondió con array vacío');
+      throw new Error('No se encontraron proyectos');
+    }
+    
   } catch (err) {
-    error.value = `Error al cargar los datos: ${err.message}`;
-    console.error('Error fetching data:', err);
+    console.error('Error completo al obtener datos:', err);
+    error.value = `Error al cargar datos: ${err.message}`;
+    proyectos.value = [];
   } finally {
     loading.value = false;
   }
@@ -139,39 +159,37 @@ const totalAmount = computed(() => {
 
 const uniqueLeaders = computed(() => {
   const leaders = proyectos.value.filter(p => p.jefe === 1);
-  return [...new Set(leaders.map(p => p.Academico))];
+  return [...new Set(leaders.map(p => p.academico))];
 });
 
-const faculties = computed(() => {
-  return [...new Set(proyectos.value.map(p => p.UA))];
+const units = computed(() => {
+  return [...new Set(proyectos.value.map(p => p.unidad))];
 });
 
-const sortedFaculties = computed(() => {
-  const facultyData = {};
+const sortedUnits = computed(() => {
+  const unitData = {};
   
   proyectos.value.forEach(p => {
-    if (!facultyData[p.UA]) {
-      facultyData[p.UA] = {
-        name: p.UA,
+    if (!unitData[p.unidad]) {
+      unitData[p.unidad] = {
+        name: p.unidad,
         count: 0,
         amount: 0
       };
     }
-    facultyData[p.UA].amount += p.monto || 0;
-    // Contar proyectos únicos por facultad
-    if (!facultyData[p.UA].projectIds) {
-      facultyData[p.UA].projectIds = new Set();
+    unitData[p.unidad].amount += p.monto || 0;
+    if (!unitData[p.unidad].projectIds) {
+      unitData[p.unidad].projectIds = new Set();
     }
-    facultyData[p.UA].projectIds.add(p.id_proyecto);
+    unitData[p.unidad].projectIds.add(p.id_proyecto);
   });
   
-  // Convertir Set a count
-  Object.keys(facultyData).forEach(key => {
-    facultyData[key].count = facultyData[key].projectIds.size;
-    delete facultyData[key].projectIds;
+  Object.keys(unitData).forEach(key => {
+    unitData[key].count = unitData[key].projectIds.size;
+    delete unitData[key].projectIds;
   });
   
-  return Object.values(facultyData)
+  return Object.values(unitData)
     .sort((a, b) => b.amount - a.amount);
 });
 
@@ -179,54 +197,61 @@ const sortedFaculties = computed(() => {
 const typeDistribution = computed(() => {
   const types = {};
   proyectos.value.forEach(p => {
-    types[p.Tipo_Convo] = (types[p.Tipo_Convo] || 0) + 1;
+    types[p.tipo_convo] = (types[p.tipo_convo] || 0) + 1;
   });
   return types;
 });
 
-const facultyAmounts = computed(() => {
+const unitAmounts = computed(() => {
   const amounts = {};
   proyectos.value.forEach(p => {
-    amounts[p.UA] = (amounts[p.UA] || 0) + (p.monto || 0);
+    amounts[p.unidad] = (amounts[p.unidad] || 0) + (p.monto || 0);
   });
   return amounts;
 });
 
-const projectsByFaculty = computed(() => {
+const projectsByUnit = computed(() => {
   const counts = {};
   const projectIds = new Set();
   
-  // Primero identificamos todos los proyectos únicos
   proyectos.value.forEach(p => projectIds.add(p.id_proyecto));
   
-  // Luego contamos por facultad
-  const facultyProjects = {};
+  const unitProjects = {};
   projectIds.forEach(id => {
     const proyecto = proyectos.value.find(p => p.id_proyecto === id);
     if (proyecto) {
-      facultyProjects[proyecto.UA] = (facultyProjects[proyecto.UA] || 0) + 1;
+      unitProjects[proyecto.unidad] = (unitProjects[proyecto.unidad] || 0) + 1;
     }
   });
   
-  return facultyProjects;
+  return unitProjects;
 });
 
 // Inicialización y renderizado de gráficos
-onMounted(fetchData);
+onMounted(() => {
+  fetchData();
+});
 
 watch(proyectos, (newVal) => {
   if (newVal.length > 0) {
-    nextTick(renderCharts);
+    nextTick(() => {
+      renderCharts();
+    });
   }
 }, { immediate: true });
 
 const renderCharts = () => {
-  // Limpiar gráficos anteriores
-  [typeChart, facultyChart, projectsFacultyChart].forEach(chartRef => {
-    if (chartRef.value?._chart) chartRef.value._chart.destroy();
+  // Destruir gráficos existentes
+  [typeChart, unitChart, projectsUnitChart].forEach(chartRef => {
+    if (chartRef.value?._chart) {
+      chartRef.value._chart.destroy();
+    }
   });
 
-  // Gráfico de tipos de convocatoria con porcentajes
+  // Solo renderizar si hay datos
+  if (!proyectos.value.length) return;
+
+  // Gráfico 1: Tipos de convocatoria
   if (typeChart.value) {
     const typeData = typeDistribution.value;
     const total = Object.values(typeData).reduce((a, b) => a + b, 0);
@@ -241,6 +266,7 @@ const renderCharts = () => {
         }]
       },
       options: {
+        responsive: true,
         plugins: {
           tooltip: {
             callbacks: {
@@ -257,13 +283,12 @@ const renderCharts = () => {
     });
   }
 
-  // Gráfico de montos por facultad
-  if (facultyChart.value) {
-    const facultyData = facultyAmounts.value;
-    const sortedEntries = Object.entries(facultyData)
-      .sort((a, b) => b[1] - a[1]);
+  // Gráfico 2: Montos por unidad
+  if (unitChart.value) {
+    const unitData = unitAmounts.value;
+    const sortedEntries = Object.entries(unitData).sort((a, b) => b[1] - a[1]);
     
-    new Chart(facultyChart.value.getContext('2d'), {
+    new Chart(unitChart.value.getContext('2d'), {
       type: 'bar',
       data: {
         labels: sortedEntries.map(([name]) => name),
@@ -274,6 +299,7 @@ const renderCharts = () => {
         }]
       },
       options: {
+        responsive: true,
         scales: {
           y: {
             beginAtZero: true,
@@ -297,13 +323,12 @@ const renderCharts = () => {
     });
   }
 
-  // Gráfico de proyectos por facultad
-  if (projectsFacultyChart.value) {
-    const facultyData = projectsByFaculty.value;
-    const sortedEntries = Object.entries(facultyData)
-      .sort((a, b) => b[1] - a[1]);
+  // Gráfico 3: Proyectos por unidad
+  if (projectsUnitChart.value) {
+    const unitData = projectsByUnit.value;
+    const sortedEntries = Object.entries(unitData).sort((a, b) => b[1] - a[1]);
     
-    new Chart(projectsFacultyChart.value.getContext('2d'), {
+    new Chart(projectsUnitChart.value.getContext('2d'), {
       type: 'bar',
       data: {
         labels: sortedEntries.map(([name]) => name),
@@ -315,11 +340,13 @@ const renderCharts = () => {
       },
       options: {
         indexAxis: 'y',
+        responsive: true,
         scales: {
           x: {
             beginAtZero: true,
             ticks: {
-              stepSize: 1
+              stepSize: 1,
+              precision: 0
             }
           }
         }
@@ -330,5 +357,98 @@ const renderCharts = () => {
 </script>
 
 <style scoped>
+/* Tus estilos existentes pueden permanecer igual */
+.stats-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
 
+.loading-state, .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  position: relative;
+  min-height: 120px;
+}
+
+.charts-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 20px;
+}
+
+.chart-card, .table-card {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+.unit-list {
+  margin-top: 15px;
+}
+
+.unit-item {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.error-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.retry-button {
+  margin-top: 15px;
+  padding: 8px 16px;
+  background: #4BC0C0;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background: #3aa8a8;
+}
+
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 4px solid #4BC0C0;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 </style>
