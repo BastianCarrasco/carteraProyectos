@@ -67,9 +67,9 @@
             <div class="title-wrapper">
               <span
                 class="project-status"
-                :class="getStatusClass(proyecto.tipo)"
+                :class="getStatusClass(proyecto.estatus)"
               >
-                {{ proyecto.tipo || "Estado no especificado" }}
+                {{ proyecto.estatus || "Estado no especificado" }}
               </span>
               <div class="logos">
                 <img
@@ -281,7 +281,7 @@ const getStatusClass = (status) => {
     "Postulado": "status-in-progress",
     "Finalizado": "status-completed",
     "Aprobado": "status-approved",
-    "Rechazado": "status-rejected",
+    "Perfil": "status-rejected",
     "En revisión": "status-review",
   };
   return statusClasses[status] || "status-unknown";
