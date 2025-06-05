@@ -5,12 +5,13 @@
         <font-awesome-icon :icon="faHouse" /> Home
       </router-link>
       <router-link to="/projects" class="nav-link">
-        <font-awesome-icon :icon="faProjectDiagram" /> Visualización de Proyectos
+        <font-awesome-icon :icon="faProjectDiagram" /> Visualización de
+        Proyectos
       </router-link>
       <router-link to="/create" class="nav-link">
         <font-awesome-icon :icon="faPlusCircle" /> Cartera de Proyectos
       </router-link>
-      
+
       <!-- Menú desplegable -->
       <div class="dropdown">
         <button class="nav-link dropdown-toggle">
@@ -19,8 +20,8 @@
         </button>
         <div class="dropdown-content">
           <router-link to="/statistics" class="dropdown-item">
-            <font-awesome-icon :icon="faChartBar" /> Estadísticas
-          </router-link>
+            <font-awesome-icon :icon="faChartBar" /> Estadísticas </router-link
+          >p
           <router-link to="/formularios" class="dropdown-item">
             <font-awesome-icon :icon="faClipboardList" /> Formularios
           </router-link>
@@ -37,7 +38,7 @@
 </template>
 
 <script setup>
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import {
   faHouse,
   faProjectDiagram,
@@ -47,8 +48,8 @@ import {
   faChevronDown,
   faChartPie,
   faClipboardList,
-  faMoneyBillWave
-} from '@fortawesome/free-solid-svg-icons'
+  faMoneyBillWave,
+} from "@fortawesome/free-solid-svg-icons";
 </script>
 
 <style scoped>
@@ -134,6 +135,8 @@ import {
 .dropdown-toggle {
   display: flex;
   align-items: center;
+  color: white;
+  background-color: green
 }
 
 .dropdown-icon {
@@ -181,8 +184,7 @@ import {
   background-color: #42b983;
   font-weight: 600;
 }
-
-@media (max-width: 768px) {
+. @media (max-width: 768px) {
   .navbar {
     flex-direction: column;
     padding: 1rem;

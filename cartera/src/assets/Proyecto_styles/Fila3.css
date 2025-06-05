@@ -1,0 +1,58 @@
+.proyecto-card {
+  background-color: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  max-width: 700px;
+  margin: 1rem auto;
+  font-family: "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans",
+    sans-serif;
+  overflow: hidden;
+  word-wrap: break-word;
+}
+
+h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.25rem;
+  color: #2c3e50;
+  font-weight: 600;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.detalle > div {
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+strong {
+  color: #444;
+  display: inline-block;
+  min-width: 140px;
+  font-weight: 500;
+}
+
+.detalle > div:nth-child(3) {
+  white-space: pre-line;
+  background-color: #f9f9f9;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-top: 1rem;
+}
+
+@media (max-width: 600px) {
+  .proyecto-card {
+    padding: 1rem;
+  }
+
+  strong {
+    min-width: 100%;
+    margin-bottom: 0.25rem;
+    display: block;
+  }
+}

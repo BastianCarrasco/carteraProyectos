@@ -293,62 +293,58 @@ const toggleSort = () => {
 </script>
 
 <style scoped>
+
 .project-header {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  min-height: 120px; /* Ajusta según lo que necesites */
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .project-title {
   font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-  width: 100%;
-}
-
-.title-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-
-.project-header {
-  display: flex;
-  flex-direction: column;
-  min-height: 80px; /* Altura mínima para el encabezado */
-  justify-content: space-between;
-}
-
-.title-wrapper {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
-}
-
-.project-title {
-  margin: 0;
-  font-size: 1.2rem;
+  font-weight: bold;
+  word-wrap: break-word;
   line-height: 1.4;
-  min-height: 3em; /* Altura fija para el título (2 líneas) */
-  display: -webkit-box;
-  -webkit-line-clamp: 2; /* Limita a 2 líneas */
-  -webkit-box-orient: vertical;
+  margin: 0;
+  max-height: 4.5em; /* Máximo 2-3 líneas */
   overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 4; /* Cambia el número de líneas visibles */
+  -webkit-box-orient: vertical;
+}
+
+.title-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  gap: 0.5rem;
+}
+
+.project-status {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
 }
 
 .logos {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .logo {
-  height: 50px; /* Tamaño fijo para los logos */
-  width: auto;
+  max-height: 32px;
+  max-width: 80px;
   object-fit: contain;
 }
+
+
 </style>

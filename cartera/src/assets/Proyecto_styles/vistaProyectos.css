@@ -174,14 +174,7 @@
   border-left: 4px solid #f39c12;
 }
 
-.project-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 1.5rem 1.5rem 1rem;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #eee;
-}
+
 
 .title-wrapper {
   flex-grow: 1;
@@ -321,6 +314,41 @@
 
 .doc-button:hover {
   background-color: #e0e0e0;
+}
+
+
+
+
+
+.title-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+
+
+
+.title-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+
+
+.logos {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo {
+  height: 50px; /* Tamaño fijo para los logos */
+  width: auto;
+  object-fit: contain;
 }
 
 @media (max-width: 768px) {
