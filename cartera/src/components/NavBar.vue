@@ -5,8 +5,7 @@
         <font-awesome-icon :icon="faHouse" /> Home
       </router-link>
       <router-link to="/projects" class="nav-link">
-        <font-awesome-icon :icon="faProjectDiagram" /> Visualización de
-        Proyectos
+        <font-awesome-icon :icon="faProjectDiagram" /> Visualización de Proyectos
       </router-link>
       <router-link to="/create" class="nav-link">
         <font-awesome-icon :icon="faPlusCircle" /> Cartera de Proyectos
@@ -20,8 +19,8 @@
         </button>
         <div class="dropdown-content">
           <router-link to="/statistics" class="dropdown-item">
-            <font-awesome-icon :icon="faChartBar" /> Estadísticas </router-link
-          >p
+            <font-awesome-icon :icon="faChartBar" /> Estadísticas
+          </router-link>
           <router-link to="/formularios" class="dropdown-item">
             <font-awesome-icon :icon="faClipboardList" /> Formularios
           </router-link>
@@ -31,6 +30,7 @@
         </div>
       </div>
     </div>
+
     <router-link to="/documents" class="nav-link documents-link">
       <font-awesome-icon :icon="faFileAlt" /> Documentos
     </router-link>
@@ -55,7 +55,7 @@ import {
 <style scoped>
 .navbar {
   background: linear-gradient(135deg, #2c3e50 0%, #1a2a3a 100%);
-  padding: 1rem 1rem;
+  padding: 1rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -68,6 +68,7 @@ import {
 .nav-left {
   display: flex;
   gap: 1.25rem;
+  flex-wrap: wrap;
 }
 
 .nav-link {
@@ -82,8 +83,9 @@ import {
   font-size: 1rem;
   font-weight: 500;
   backdrop-filter: blur(2px);
-  border: none;
   cursor: pointer;
+  border: none;
+  background: transparent;
 }
 
 .nav-link:hover {
@@ -105,15 +107,11 @@ import {
   box-shadow: 0 4px 16px rgba(255, 123, 37, 0.3);
 }
 
-.documents-link:hover {
-  background: linear-gradient(135deg, #ff6a00 0%, #ff4d00 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 106, 0, 0.4);
-}
-
+.documents-link:hover,
 .router-link-active.documents-link {
   background: linear-gradient(135deg, #ff6a00 0%, #ff4d00 100%);
   box-shadow: 0 6px 20px rgba(255, 106, 0, 0.5);
+  transform: translateY(-2px);
 }
 
 .nav-link svg {
@@ -126,17 +124,17 @@ import {
   transform: scale(1.15);
 }
 
-/* Estilos para el menú desplegable */
+/* Dropdown Styles */
 .dropdown {
   position: relative;
-  display: inline-block;
 }
 
 .dropdown-toggle {
   display: flex;
   align-items: center;
   color: white;
-  background-color: green
+  background-color: transparent;
+  border: none;
 }
 
 .dropdown-icon {
@@ -158,7 +156,6 @@ import {
   z-index: 1;
   top: 100%;
   left: 0;
-  overflow: hidden;
 }
 
 .dropdown:hover .dropdown-content {
@@ -184,10 +181,11 @@ import {
   background-color: #42b983;
   font-weight: 600;
 }
-. @media (max-width: 768px) {
+
+/* Responsive Styles */
+@media (max-width: 768px) {
   .navbar {
     flex-direction: column;
-    padding: 1rem;
     gap: 0.5rem;
   }
 
@@ -201,7 +199,6 @@ import {
   .documents-link {
     width: 100%;
     justify-content: center;
-    padding: 0.75rem;
   }
 
   .documents-link {

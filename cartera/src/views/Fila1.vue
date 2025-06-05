@@ -1,134 +1,233 @@
 <template>
-  <div class="form-fila1">
-    <div class="campos-verticales">
-      <div class="campo">
-        <label>Nombre:</label>
-        <input type="text" v-model="local.nombre" @input="emitirCambio" />
-      </div>
+  <div class="form-container">
+    <div class="form-header">
+      <h2>Información del Proyecto</h2>
+    </div>
 
-      <div class="campo">
-        <label>Comentarios:</label>
-        <textarea v-model="local.comentarios" @input="emitirCambio"></textarea>
-      </div>
-
-      <div class="grid-campos">
-        <div class="campo">
-          <label>Monto:</label>
-          <input
-            type="number"
-            v-model.number="local.monto"
-            @input="emitirCambio"
+    <div class="form-body">
+      <!-- Sección principal -->
+      <div class="form-section">
+        <div class="form-group">
+          <label class="form-label">Nombre del Proyecto:</label>
+          <input 
+            type="text" 
+            v-model="local.nombre" 
+            @input="emitirCambio" 
+            class="form-input"
+            placeholder="Ingrese el nombre del proyecto"
           />
         </div>
 
-        <div class="campo">
-          <label>Fecha de Postulación:</label>
-          <input
-            type="date"
-            v-model="local.fecha_postulacion"
-            @input="emitirCambio"
-          />
+        <div class="form-group">
+          <label class="form-label">Comentarios:</label>
+          <textarea 
+            v-model="local.comentarios" 
+            @input="emitirCambio" 
+            class="form-textarea"
+            placeholder="Agregue comentarios relevantes"
+            rows="3"
+          ></textarea>
         </div>
+      </div>
 
-        <div class="campo">
-          <label>Convocatoria:</label>
-          <select v-model="local.id_convocatoria" @change="emitirCambio">
-            <option value="">Seleccione una convocatoria</option>
-            <option
-              v-for="convocatoria in convocatorias"
-              :key="convocatoria.id"
-              :value="convocatoria.id"
+      <!-- Sección de grid -->
+      <div class="form-grid">
+        <!-- Columna 1 -->
+        <div class="form-column">
+          <div class="form-group">
+            <label class="form-label">Monto:</label>
+            <input 
+              type="number" 
+              v-model.number="local.monto" 
+              @input="emitirCambio" 
+              class="form-input"
+              placeholder="0.00"
+              min="0"
+              step="0.01"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Fecha de Postulación:</label>
+            <input 
+              type="date" 
+              v-model="local.fecha_postulacion" 
+              @input="emitirCambio" 
+              class="form-input"
+            />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Convocatoria:</label>
+            <select 
+              v-model="local.id_convocatoria" 
+              @change="emitirCambio" 
+              class="form-select"
             >
-              {{ convocatoria.convocatoria }} ({{ convocatoria.tipo }} -
-              {{ convocatoria.institucion }})
-            </option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label>Temática:</label>
-          <select v-model="local.id_tematica" @change="emitirCambio">
-            <option value="">Seleccione una temática</option>
-            <option
-              v-for="tematica in tematicas"
-              :key="tematica.id_tematica"
-              :value="tematica.id_tematica"
-            >
-              {{ tematica.nombre }}
-            </option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label>Estatus:</label>
-          <select v-model="local.id_estatus" @change="emitirCambio">
-            <option value="">Seleccione un estatus</option>
-            <option
-              v-for="estatus in estatusList"
-              :key="estatus.id_estatus"
-              :value="estatus.id_estatus"
-            >
-              {{ estatus.tipo }}
-            </option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label>Unidad Académica:</label>
-          <select v-model="local.id_unidad" @change="emitirCambio">
-            <option value="">Seleccione una Unidad</option>
-            <option
-              v-for="ua in uaList"
-              :key="ua.id_unidad"
-              :value="ua.id_unidad"
-            >
-              {{ ua.nombre }}
-            </option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label>Apoyo:</label>
-          <select v-model="local.id_apoyo" @change="emitirCambio">
-            <option value="">Seleccione un apoyo</option>
-            <option
-              v-for="apoyo in apoyos"
-              :key="apoyo.id_apoyo"
-              :value="apoyo.id_apoyo"
-            >
-              {{ apoyo.tipo + ' - ' + apoyo.detalle }}
-            </option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label>Académicos:</label>
-          <div class="academicos-container">
-            <div v-for="(academicoId, index) in local.academicos" :key="index" class="academico-item">
-              <select v-model="local.academicos[index]" @change="emitirCambio">
-                <option value="">Seleccione un académico</option>
-                <option
-                  v-for="academico in academicos"
-                  :key="academico.id_academico"
-                  :value="academico.id_academico"
-                >
-                 {{ academico.a_paterno ? academico.nombre + ' ' + academico.a_paterno : academico.nombre }}
-
-                </option>
-              </select>
-              <button 
-                type="button" 
-                @click="eliminarAcademico(index)" 
-                class="btn-eliminar"
-                :disabled="local.academicos.length <= 1"
+              <option value="">Seleccione una convocatoria</option>
+              <option 
+                v-for="convocatoria in convocatorias" 
+                :key="convocatoria.id" 
+                :value="convocatoria.id"
               >
-                ×
+                {{ convocatoria.convocatoria }} ({{ convocatoria.tipo }} - {{ convocatoria.institucion }})
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Columna 2 -->
+        <div class="form-column">
+          <div class="form-group">
+            <label class="form-label">Temática:</label>
+            <select 
+              v-model="local.id_tematica" 
+              @change="emitirCambio" 
+              class="form-select"
+            >
+              <option value="">Seleccione una temática</option>
+              <option 
+                v-for="tematica in tematicas" 
+                :key="tematica.id_tematica" 
+                :value="tematica.id_tematica"
+              >
+                {{ tematica.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Estatus:</label>
+            <select 
+              v-model="local.id_estatus" 
+              @change="emitirCambio" 
+              class="form-select"
+            >
+              <option value="">Seleccione un estatus</option>
+              <option 
+                v-for="estatus in estatusList" 
+                :key="estatus.id_estatus" 
+                :value="estatus.id_estatus"
+              >
+                {{ estatus.tipo }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Unidad Académica:</label>
+            <select 
+              v-model="local.id_unidad" 
+              @change="emitirCambio" 
+              class="form-select"
+            >
+              <option value="">Seleccione una Unidad</option>
+              <option 
+                v-for="ua in uaList" 
+                :key="ua.id_unidad" 
+                :value="ua.id_unidad"
+              >
+                {{ ua.nombre }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Columna 3 -->
+        <div class="form-column">
+          <div class="form-group">
+            <label class="form-label">Tipo de Apoyo:</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input 
+                  type="radio" 
+                  v-model="local.id_apoyo" 
+                  :value="1" 
+                  @change="handleApoyoChange(1)" 
+                  class="radio-input"
+                />
+                <span class="radio-label">Total</span>
+              </label>
+              <label class="radio-option">
+                <input 
+                  type="radio" 
+                  v-model="local.id_apoyo" 
+                  :value="2" 
+                  @change="handleApoyoChange(2)" 
+                  class="radio-input"
+                />
+                <span class="radio-label">Parcial</span>
+              </label>
+            </div>
+            <div v-if="local.id_apoyo === 2 && apoyoSeleccionado" class="apoyo-seleccionado">
+              <strong>Opciones seleccionadas:</strong> {{ apoyoSeleccionado.detalle }}
+              <button @click="abrirModal" class="btn-editar">Editar</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Académicos:</label>
+            <div class="academicos-list">
+              <div v-for="(academicoId, index) in local.academicos" :key="index" class="academico-item">
+                <select 
+                  v-model="local.academicos[index]" 
+                  @change="emitirCambio" 
+                  class="form-select academico-select"
+                >
+                  <option value="">Seleccione un académico</option>
+                  <option 
+                    v-for="academico in academicos" 
+                    :key="academico.id_academico" 
+                    :value="academico.id_academico"
+                  >
+                    {{ academico.a_paterno ? `${academico.nombre} ${academico.a_paterno}` : academico.nombre }}
+                  </option>
+                </select>
+                <button 
+                  @click="eliminarAcademico(index)" 
+                  class="btn-eliminar"
+                  :disabled="local.academicos.length <= 1"
+                  title="Eliminar académico"
+                >
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+              <button @click="agregarAcademico" class="btn-agregar">
+                <i class="fas fa-plus"></i> Añadir académico
               </button>
             </div>
-            <button type="button" @click="agregarAcademico" class="btn-agregar">
-              + Añadir otro académico
-            </button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para selección de tags de apoyo parcial -->
+    <div v-if="mostrarModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Seleccione las opciones de apoyo parcial</h3>
+          <button @click="cerrarModal" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="tags-container">
+            <div 
+              v-for="tag in tagsDisponibles" 
+              :key="tag.id_apoyo" 
+              class="tag-option"
+              @click="toggleTag(tag.tag)"
+              :class="{ selected: tagsSeleccionados.includes(tag.tag) }"
+            >
+              {{ tag.tag }}
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button @click="confirmarTags" class="btn-confirmar">
+            <i class="fas fa-check"></i> Confirmar selección
+          </button>
+          <button @click="cerrarModal" class="btn-cancelar">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
         </div>
       </div>
     </div>
@@ -136,15 +235,8 @@
 </template>
 
 <script>
-import {
-  fetchTematicas,
-  fetchEstatus,
-  fetchConvocatorias,
-  fetchUA,
-  fetchApoyos,
-  fetchAcademicos
-} from "../plugins/useSistemaData.js";
-
+import { fetchTematicas, fetchEstatus, fetchConvocatorias, fetchUA, fetchApoyos, fetchAcademicos } from "../plugins/useSistemaData.js";
+import '../assets/Proyecto_styles/Fila1.css';
 export default {
   name: "Fila1",
   props: ["proyecto"],
@@ -157,42 +249,50 @@ export default {
         id_estatus: this.proyecto.id_estatus || "",
         id_unidad: this.proyecto.id_unidad || "",
         id_apoyo: this.proyecto.id_apoyo || "",
-        academicos: this.proyecto.academicos || [""] // Array de IDs de académicos
+        academicos: this.proyecto.academicos || [""],
+        
       },
       convocatorias: [],
       tematicas: [],
       estatusList: [],
       uaList: [],
       apoyos: [],
-      academicos: []
+      academicos: [],
+      mostrarModal: false,
+      tagsDisponibles: [],
+      tagsSeleccionados: [],
+      apoyoSeleccionado: null
     };
   },
   async created() {
     try {
-      const [temas, estatus, convocs, ua, apoyo, academicos] = await Promise.all([
+      const [temas, estatus, convocs, ua, apoyo, acads] = await Promise.all([
         fetchTematicas(),
         fetchEstatus(),
         fetchConvocatorias(),
         fetchUA(),
         fetchApoyos(),
-        fetchAcademicos()
+        fetchAcademicos(),
       ]);
-
       this.tematicas = temas.data || temas;
       this.estatusList = estatus.data || estatus;
       this.convocatorias = convocs.data || convocs;
       this.uaList = ua.data || ua;
       this.apoyos = apoyo.data || apoyo;
-      this.academicos = academicos.data || academicos;
+      this.academicos = acads.data || acads;
+      
+      // Si ya hay un apoyo parcial seleccionado, cargar sus datos
+      if (this.local.id_apoyo && this.local.id_apoyo !== 1) {
+        this.cargarApoyoExistente();
+      }
     } catch (error) {
       console.error("Error cargando datos:", error);
     }
   },
   methods: {
     agregarAcademico() {
-      this.local.academicos.push(""); // Agrega un nuevo campo vacío
+      this.local.academicos.push("");
       this.emitirCambio();
-      console.log("Nuevo académico agregado:", this.proyecto);
     },
     eliminarAcademico(index) {
       if (this.local.academicos.length > 1) {
@@ -200,8 +300,88 @@ export default {
         this.emitirCambio();
       }
     },
-    emitirCambio() {
-      this.$emit("actualizar", this.local);
+   emitirCambio() {
+  const datosConTags = {
+    ...this.local,
+    tags_parciales: this.tagsSeleccionados
+  };
+  this.$emit("actualizar", datosConTags);
+}
+,
+    async handleApoyoChange(tipo) {
+      if (tipo === 1) {
+        // Apoyo total
+        this.local.id_apoyo = 1;
+        this.apoyoSeleccionado = null;
+        this.emitirCambio();
+      } else {
+        // Apoyo parcial - abrir modal para selección
+        await this.cargarTags();
+        this.mostrarModal = true;
+      }
+    },
+    async cargarTags() {
+      try {
+        const res = await fetch("https://kth2025backend-production.up.railway.app/AllTags");
+        const data = await res.json();
+        this.tagsDisponibles = data.data || [];
+      } catch (error) {
+        console.error("Error cargando tags:", error);
+      }
+    },
+    async cargarApoyoExistente() {
+      try {
+        const res = await fetch(`https://kth2025backend-production.up.railway.app/apoyos/${this.local.id_apoyo}`);
+        const data = await res.json();
+        if (data.success) {
+          this.apoyoSeleccionado = data.data;
+          this.tagsSeleccionados = data.data.detalle.split(", ");
+        }
+      } catch (error) {
+        console.error("Error cargando apoyo existente:", error);
+      }
+    },
+    toggleTag(tag) {
+      const index = this.tagsSeleccionados.indexOf(tag);
+      if (index === -1) {
+        this.tagsSeleccionados.push(tag);
+      } else {
+        this.tagsSeleccionados.splice(index, 1);
+      }
+    },
+    abrirModal() {
+      this.mostrarModal = true;
+    },
+    cerrarModal() {
+      this.mostrarModal = false;
+    },
+    async confirmarTags() {
+      if (this.tagsSeleccionados.length === 0) {
+        alert("Por favor seleccione al menos una opción de apoyo parcial");
+        return;
+      }
+      
+      const detalle = this.tagsSeleccionados.join(", ");
+      const payload = { tipo: 2, detalle };
+
+      try {
+        const res = await fetch("https://kth2025backend-production.up.railway.app/crearApoyo", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success) {
+          this.local.id_apoyo = data.data.id_apoyo;
+          this.apoyoSeleccionado = data.data;
+          this.mostrarModal = false;
+          this.emitirCambio();
+        } else {
+          console.error("Error en respuesta al crear apoyo parcial");
+        }
+      } catch (error) {
+        console.error("Error al crear apoyo parcial:", error);
+      }
     },
   },
   watch: {
@@ -214,136 +394,22 @@ export default {
           id_estatus: nuevo.id_estatus || "",
           id_unidad: nuevo.id_unidad || "",
           id_apoyo: nuevo.id_apoyo || "",
-          academicos: nuevo.academicos || [""]
+          academicos: nuevo.academicos || [""],
         };
+        
+        // Si hay un apoyo parcial, cargar sus datos
+        if (this.local.id_apoyo && this.local.id_apoyo !== 1) {
+          this.cargarApoyoExistente();
+        } else {
+          this.apoyoSeleccionado = null;
+        }
       },
       deep: true,
     },
   },
-  
 };
 </script>
 
 <style scoped>
-.form-fila1 {
-  width: 100%;
-  padding: 1rem;
-  box-sizing: border-box;
-}
 
-.campos-verticales {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  width: 100%;
-}
-
-.grid-campos {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 1.25rem;
-  width: 100%;
-}
-
-.campo {
-  display: flex;
-  flex-direction: column;
-}
-
-label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-  color: #222;
-}
-
-input,
-textarea,
-select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  background-color: #fff;
-  box-sizing: border-box;
-}
-
-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-.academicos-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.academico-item {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.academico-item select {
-  flex: 1;
-}
-
-.btn-eliminar {
-  background: #ff4444;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  width: 30px;
-  height: 30px;
-  cursor: pointer;
-  font-size: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-eliminar:hover {
-  background: #cc0000;
-}
-
-.btn-eliminar:disabled {
-  background: #cccccc;
-  cursor: not-allowed;
-}
-
-.btn-agregar {
-  background: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem;
-  cursor: pointer;
-  margin-top: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.btn-agregar:hover {
-  background: #388E3C;
-}
-
-@media (max-width: 768px) {
-  .grid-campos {
-    grid-template-columns: 1fr;
-  }
-  
-  .form-fila1 {
-    padding: 0.5rem;
-  }
-  
-  .academico-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .btn-eliminar {
-    width: 100%;
-  }
-}
 </style>

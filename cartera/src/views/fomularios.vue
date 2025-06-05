@@ -18,7 +18,7 @@
         <select id="academicoFilter" v-model="filtroValor">
           <option value="">Todos los académicos</option>
           <option v-for="academico in academicos" :key="academico.id_academico" :value="academico.id_academico">
-            {{ academico.nombre }}
+            {{ academico.nombre + ' ' + academico.a_paterno }}
           </option>
         </select>
       </div>

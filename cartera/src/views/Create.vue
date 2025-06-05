@@ -38,7 +38,8 @@ export default {
         <Fila1 :proyecto="proyecto" @actualizar="actualizarProyecto" />
       </div>
       <div class="columna-pequena">
-        <Fila3 :proyecto="proyecto" />
+        <Fila3 v-if="proyecto.id_apoyo !== null" :proyecto="proyecto" />
+
       </div>
     </div>
   </div>
@@ -61,7 +62,7 @@ export default {
 }
 
 .columna-grande {
-  flex: 2.5;
+  flex: 2.6;
   border: 1px solid #ddd;
   padding: 20px;
   box-sizing: border-box;
@@ -69,7 +70,7 @@ export default {
 }
 
 .columna-pequena {
-  flex: 1.5;
+  flex: 1.3;
   border: 1px solid #ddd;
   padding: 20px;
   box-sizing: border-box;

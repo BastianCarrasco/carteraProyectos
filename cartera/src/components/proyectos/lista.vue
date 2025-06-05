@@ -71,6 +71,13 @@
               >
                 {{ proyecto.estatus || "Estado no especificado" }}
               </span>
+
+               <div class="info-item">
+                <h3 class="info-label">Temática</h3>
+                <p class="info-content">
+                  {{ proyecto.tematica || "No especificada" }}
+                </p>
+              </div>
               <div class="logos">
                 <img
                   :src="getLogoForTipo(proyecto.tipo_convo)"
@@ -94,7 +101,7 @@
               <div class="info-item">
                 <h3 class="info-label">Académic@/s-Líder</h3>
                 <p class="info-content">
-                  {{ proyecto.academicos.join(', ') }}
+                  {{ proyecto.academicos.join(", ") }}
                   <!-- <span v-if="proyecto.jefe">(Líder: {{ proyecto.jefe }})</span> -->
                 </p>
               </div>
@@ -106,12 +113,12 @@
                 </p>
               </div>
 
-              <div class="info-item">
+              <!-- <div class="info-item">
                 <h3 class="info-label">Temática</h3>
                 <p class="info-content">
                   {{ proyecto.tematica || "No especificada" }}
                 </p>
-              </div>
+              </div> -->
 
               <div class="info-item">
                 <h3 class="info-label">Monto total</h3>
@@ -156,7 +163,7 @@
 
 <script setup>
 import { ref, computed } from "vue";
-import '../../assets/Proyecto_styles/vistaProyectos.css';
+import "../../assets/Proyecto_styles/vistaProyectos.css";
 
 const props = defineProps({
   proyectos: Array,
@@ -217,15 +224,15 @@ const filteredProjects = computed(() => {
 
 const groupedProjects = computed(() => {
   const projectsMap = new Map();
-  
-  filteredProjects.value.forEach(proyecto => {
+
+  filteredProjects.value.forEach((proyecto) => {
     if (!projectsMap.has(proyecto.nombre)) {
       projectsMap.set(proyecto.nombre, {
         ...proyecto,
         academicos: [proyecto.academico],
         hasJefe: proyecto.jefe === 1,
         jefe: proyecto.jefe === 1 ? proyecto.academico : null,
-        ids: [proyecto.id_proyecto]
+        ids: [proyecto.id_proyecto],
       });
     } else {
       const existing = projectsMap.get(proyecto.nombre);
@@ -246,14 +253,18 @@ const groupedProjects = computed(() => {
 // Métodos
 const getLogoForTipo = (tipo) => {
   const logos = {
-    CORFO: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSehNJ8c1LJpJ2z8Nr2XYscS09nWUlKwaulgA&s",
+    CORFO:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSehNJ8c1LJpJ2z8Nr2XYscS09nWUlKwaulgA&s",
     GORE: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVIux8ljUoTxTk5iZz3tjeY1bvO95MdNHSgg&s",
     ANID: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGM-cRJH0Ht6RvxzhqhjRjnISvlCibYJFnuQ&s",
     PRIVADA: "https://cdn-icons-png.flaticon.com/512/3135/3135715.png",
-    CODESSER: "https://yt3.googleusercontent.com/ytc/AIdro_nzFhzBeDsXQ3D7AF5rdL_n5us28Hn8hLUTSaK3xYwwtkU=s900-c-k-c0x00ffffff-no-rj",
+    CODESSER:
+      "https://yt3.googleusercontent.com/ytc/AIdro_nzFhzBeDsXQ3D7AF5rdL_n5us28Hn8hLUTSaK3xYwwtkU=s900-c-k-c0x00ffffff-no-rj",
     SQM: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRZbCTVM6AKaqYd5XuTWp8-VRuTkEsNQJaJBA&s",
-    "GORE-Valparaíso": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Logo_GORE_Valparaiso.svg/1200px-Logo_GORE_Valparaiso.svg.png",
-    FONDECYT: "https://www.anid.cl/wp-content/uploads/2021/07/logo-anid-2021.png",
+    "GORE-Valparaíso":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Logo_GORE_Valparaiso.svg/1200px-Logo_GORE_Valparaiso.svg.png",
+    FONDECYT:
+      "https://www.anid.cl/wp-content/uploads/2021/07/logo-anid-2021.png",
     FONDAP: "https://www.anid.cl/wp-content/uploads/2021/07/logo-anid-2021.png",
     FONIS: "https://www.anid.cl/wp-content/uploads/2021/07/logo-anid-2021.png",
   };
@@ -278,10 +289,10 @@ const formatDate = (dateString) => {
 
 const getStatusClass = (status) => {
   const statusClasses = {
-    "Postulado": "status-in-progress",
-    "Finalizado": "status-completed",
-    "Aprobado": "status-approved",
-    "Perfil": "status-rejected",
+    Postulado: "status-in-progress",
+    Finalizado: "status-completed",
+    Aprobado: "status-approved",
+    Perfil: "status-rejected",
     "En revisión": "status-review",
   };
   return statusClasses[status] || "status-unknown";
@@ -293,17 +304,15 @@ const toggleSort = () => {
 </script>
 
 <style scoped>
-
 .project-header {
+  height: 180px; /* Altura fija para todos los headers */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: 120px; /* Ajusta según lo que necesites */
   padding: 1rem;
   background-color: #f9f9f9;
-  border-radius: 8px;
+  border-radius: 8px 8px 0 0;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 .project-title {
@@ -318,6 +327,12 @@ const toggleSort = () => {
   display: -webkit-box;
   -webkit-line-clamp: 4; /* Cambia el número de líneas visibles */
   -webkit-box-orient: vertical;
+}
+
+.project-body {
+  flex: 1; /* Hace que el cuerpo ocupe el espacio restante */
+  padding: 1rem;
+  overflow: hidden; /* Evita que el contenido desborde */
 }
 
 .title-wrapper {
@@ -345,6 +360,4 @@ const toggleSort = () => {
   max-width: 80px;
   object-fit: contain;
 }
-
-
 </style>
