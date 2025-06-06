@@ -5,10 +5,14 @@
         <font-awesome-icon :icon="faHouse" /> Home
       </router-link>
       <router-link to="/projects" class="nav-link">
-        <font-awesome-icon :icon="faProjectDiagram" /> Visualización de Proyectos
+        <font-awesome-icon :icon="faProjectDiagram" /> Visualización de
+        Proyectos
       </router-link>
       <router-link to="/create" class="nav-link">
         <font-awesome-icon :icon="faPlusCircle" /> Cartera de Proyectos
+      </router-link>
+      <router-link to="/edit" class="nav-link">
+        <font-awesome-icon :icon="faDatabase" /> Editar BD
       </router-link>
 
       <!-- Menú desplegable -->
@@ -49,6 +53,8 @@ import {
   faChartPie,
   faClipboardList,
   faMoneyBillWave,
+  faDatabase, // Nuevo ícono agregado
+  faEdit, // Alternativa opcional
 } from "@fortawesome/free-solid-svg-icons";
 </script>
 

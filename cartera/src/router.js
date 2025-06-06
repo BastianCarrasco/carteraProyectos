@@ -8,11 +8,12 @@ import Doc from "./views/documents.vue";
 import Formularios from "./views/fomularios.vue";
 import Eval from "./views/Eval.vue";
 
+
 const routes = [
   { path: "/", component: Home },
   { path: "/projects", component: Projects },
   { path: "/create", component: Create },
-  { path: "/edit/:id", component: Edit, props: true },
+  { path: "/edit", component: Edit},
   { path: "/statistics", component: Statistics },
   { path: "/documents", component: Doc },
   { path: "/formularios", component: Formularios },

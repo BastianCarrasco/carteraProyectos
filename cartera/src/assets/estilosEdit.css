@@ -1,0 +1,174 @@
+.columna-derecha {
+  background-color: #f5f7fa;
+  padding: 24px 28px;
+  height: 100%;
+  overflow-y: auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+   max-width: 100%;
+}
+
+.editor-container {
+  max-width: 100%;
+  margin: 0 auto;
+  background: #ffffff;
+  padding: 32px 36px;
+  border-radius: 12px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+h1 {
+  font-weight: 700;
+  font-size: 1.9rem;
+  color: #222;
+  margin-bottom: 16px;
+  letter-spacing: 0.03em;
+  border-bottom: 2px solid #2196f3;
+  padding-bottom: 8px;
+  user-select: none;
+}
+
+.acciones-superiores {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-nuevo {
+  padding: 10px 24px;
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: 0 4px 8px rgba(25, 118, 210, 0.3);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.btn-nuevo:hover {
+  background-color: #155a9c;
+  box-shadow: 0 6px 12px rgba(21, 90, 156, 0.5);
+}
+
+.lista-con-edicion {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.item-n {
+  padding: 20px 24px;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background-color: #fafafa;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 130px;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.item-n:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  border-color: #2196f3;
+}
+
+.vista-normal,
+.vista-edicion {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vista-normal span {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.input-edicion {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1.8px solid #b0bec5;
+  border-radius: 10px;
+  outline-offset: 2px;
+  transition: border-color 0.25s ease;
+  font-family: inherit;
+  color: #333;
+}
+
+.input-edicion:focus {
+  border-color: #1976d2;
+  box-shadow: 0 0 8px rgba(25, 118, 210, 0.3);
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-accion {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 24px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: white;
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
+  transition: background-color 0.25s ease, box-shadow 0.25s ease, transform 0.15s ease;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.btn-accion:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.editar {
+  background-color: #fbc02d;
+  color: #212121;
+}
+
+.editar:hover {
+  background-color: #c49000;
+}
+
+.guardar {
+  background-color: #43a047;
+}
+
+.guardar:hover {
+  background-color: #357a38;
+}
+
+.eliminar {
+  background-color: #e53935;
+}
+
+.eliminar:hover {
+  background-color: #ab2721;
+}
+
+.cancelar {
+  background-color: #757575;
+}
+
+.cancelar:hover {
+  background-color: #545454;
+}

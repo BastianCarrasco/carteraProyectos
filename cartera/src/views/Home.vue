@@ -22,7 +22,7 @@
       <div class="feature-card">
         <h2>✏️ Editar</h2>
         <p>Actualiza la información de tus proyectos existentes.</p>
-        <router-link to="/projects" class="action-button">Editar proyectos</router-link>
+        <router-link to="/edit" class="action-button">Editar proyectos</router-link>
       </div>
 
       <!-- Tarjeta 4: Estadísticas -->
