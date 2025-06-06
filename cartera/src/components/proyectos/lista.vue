@@ -1,7 +1,6 @@
 <template>
   <div class="container">
     <header class="header">
-      <h1 class="title">Cartera de Proyectos</h1>
       <div class="controls">
         <div class="search-box">
           <input
@@ -19,18 +18,51 @@
             class="filter-select"
             aria-label="Filtrar por tipo"
           >
-            <option value="">Todos los proyectos</option>
+            <option value="">Convocatorias</option>
             <option v-for="tipo in uniqueTypes" :key="tipo" :value="tipo">
               {{ tipo }}
             </option>
           </select>
-          <button
+          <!-- <button
             @click="toggleSort"
             class="sort-button"
             aria-label="Cambiar orden"
           >
             {{ sortAscending ? "Más nuevos primero" : "Más antiguos primero" }}
-          </button>
+          </button> -->
+
+          <select
+            v-model="selectedTematica"
+            class="filter-select"
+            aria-label="Filtrar por temática"
+          >
+            <option value="">Todas las temáticas</option>
+            <option v-for="t in uniqueTematicas" :key="t" :value="t">
+              {{ t }}
+            </option>
+          </select>
+
+          <select
+            v-model="selectedAcademico"
+            class="filter-select"
+            aria-label="Filtrar por académic@"
+          >
+            <option value="">Académic@/s</option>
+            <option v-for="a in uniqueAcademicos" :key="a" :value="a">
+              {{ a }}
+            </option>
+          </select>
+
+          <select
+            v-model="selectedUnidad"
+            class="filter-select"
+            aria-label="Filtrar por unidad académica"
+          >
+            <option value="">Todas las unidades</option>
+            <option v-for="u in uniqueUnidades" :key="u" :value="u">
+              {{ u }}
+            </option>
+          </select>
         </div>
       </div>
     </header>
@@ -72,7 +104,7 @@
                 {{ proyecto.estatus || "Estado no especificado" }}
               </span>
 
-               <div class="info-item">
+              <div class="info-item">
                 <h3 class="info-label">Temática</h3>
                 <p class="info-content">
                   {{ proyecto.tematica || "No especificada" }}
@@ -171,6 +203,11 @@ const props = defineProps({
   error: String,
 });
 
+const selectedTematica = ref("");
+const selectedAcademico = ref("");
+const selectedUnidad = ref("");
+
+
 const emit = defineEmits(["retry"]);
 
 // Estados reactivos
@@ -186,6 +223,30 @@ const uniqueTypes = computed(() => {
     if (p.inst_convo) types.add(p.inst_convo);
   });
   return Array.from(types).sort();
+});
+
+const uniqueTematicas = computed(() => {
+  const tematicas = new Set();
+  props.proyectos.forEach((p) => {
+    if (p.tematica) tematicas.add(p.tematica);
+  });
+  return Array.from(tematicas).sort();
+});
+
+const uniqueAcademicos = computed(() => {
+  const academicos = new Set();
+  props.proyectos.forEach((p) => {
+    if (p.academico) academicos.add(p.academico);
+  });
+  return Array.from(academicos).sort();
+});
+
+const uniqueUnidades = computed(() => {
+  const unidades = new Set();
+  props.proyectos.forEach((p) => {
+    if (p.unidad) unidades.add(p.unidad);
+  });
+  return Array.from(unidades).sort();
 });
 
 const filteredProjects = computed(() => {
@@ -210,6 +271,22 @@ const filteredProjects = computed(() => {
         p.tipo_convo === selectedFilter.value ||
         p.inst_convo === selectedFilter.value
     );
+  }
+
+  // Filtro por temática
+  if (selectedTematica.value) {
+    filtered = filtered.filter((p) => p.tematica === selectedTematica.value);
+  }
+
+  // Filtro por académic@
+  if (selectedAcademico.value) {
+  filtered = filtered.filter((p) => p.academico === selectedAcademico.value);
+}
+
+
+  // Filtro por unidad académica
+  if (selectedUnidad.value) {
+    filtered = filtered.filter((p) => p.unidad === selectedUnidad.value);
   }
 
   // Aplicar ordenamiento
