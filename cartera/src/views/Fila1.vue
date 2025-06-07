@@ -322,7 +322,7 @@ export default {
     },
     async cargarTags() {
       try {
-        const res = await fetch("https://kth2025backend-production.up.railway.app/AllTags");
+        const res = await fetch("https://kth2025backend-production.up.railway.app/tag");
         const data = await res.json();
         this.tagsDisponibles = data.data || [];
       } catch (error) {
