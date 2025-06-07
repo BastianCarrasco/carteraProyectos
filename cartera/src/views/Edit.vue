@@ -1,31 +1,37 @@
 <template>
   <div class="contenedor">
     <div class="columna-izquierda">
-      <button class="boton" @click="mostrarEditor">
+      <button class="boton" @click="mostrarEditor('tematicas')">
         Abrir Editor de Temáticas
+      </button>
+      <button class="boton" @click="mostrarEditor('proyectos')">
+        Abrir Editor de Proyectos
       </button>
     </div>
     <div class="columna-derecha">
-      <TematicasEditor v-if="mostrarModuloEditor" />
+      <TematicasEditor v-if="moduloActivo === 'tematicas'" />
+      <ProyectoEditor v-else-if="moduloActivo === 'proyectos'"/>
     </div>
   </div>
 </template>
 
 <script>
-import TematicasEditor from "../components/tematicas/TematicasEditor.vue";
+import TematicasEditor from "../components/ITEMS/TematicasEditor.vue";
+import ProyectoEditor from "../components/ITEMS/ProyectoEditor.vue";
 
 export default {
   components: {
     TematicasEditor,
+    ProyectoEditor
   },
   data() {
     return {
-      mostrarModuloEditor: false,
+      moduloActivo: null, // 'tematicas' o 'proyectos'
     };
   },
   methods: {
-    mostrarEditor() {
-      this.mostrarModuloEditor = true;
+    mostrarEditor(modulo) {
+      this.moduloActivo = modulo;
     },
   },
 };
@@ -61,6 +67,9 @@ export default {
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 100%;
+  max-width: 250px;
+  text-align: center;
 }
 
 .boton:hover {
@@ -76,5 +85,6 @@ export default {
 .columna-derecha {
   border-left: 1px solid #ccc;
   padding-left: 1rem;
+  overflow: auto;
 }
 </style>
