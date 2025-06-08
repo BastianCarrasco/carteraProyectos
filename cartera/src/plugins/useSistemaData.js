@@ -7,7 +7,24 @@ const convocatoriasUrl = import.meta.env.VITE_API_URL_CONVOCATORIAS;
 const academicosUrl= import.meta.env.VITE_API_URL_ACADEMICOS; 
 const UAURL = import.meta.env.VITE_API_URL_UA;
 const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS;
+const apoyos_tags = import.meta.env.VITE_API_URL_TAGS;
 
+export async function fetchTags() {
+  try {
+    const response = await fetch(apoyos_tags);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const contentType = response.headers.get('content-type');
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(`Expected JSON but got: ${text.substring(0, 100)}...`);
+    }
+    const data = await response.json();
+    return data.data || data;
+  } catch (err) {
+    console.error('Error al cargar Project:', err);
+    throw err;
+  }
+}
 
 
 export async function fetchProyectos() {

@@ -7,10 +7,14 @@
       <button class="boton" @click="mostrarEditor('proyectos')">
         Abrir Editor de Proyectos
       </button>
+      <button class="boton" @click="mostrarEditor('apoyo')">
+  Abrir Editor de Tags
+</button>
     </div>
     <div class="columna-derecha">
       <TematicasEditor v-if="moduloActivo === 'tematicas'" />
       <ProyectoEditor v-else-if="moduloActivo === 'proyectos'"/>
+      <DetalleApoyoEditor v-else-if="moduloActivo === 'apoyo'"/>
     </div>
   </div>
 </template>
@@ -18,11 +22,13 @@
 <script>
 import TematicasEditor from "../components/ITEMS/TematicasEditor.vue";
 import ProyectoEditor from "../components/ITEMS/ProyectoEditor.vue";
+import DetalleApoyoEditor from "../components/ITEMS/DetalleApoyoEditor.vue"; 
 
 export default {
   components: {
     TematicasEditor,
-    ProyectoEditor
+    ProyectoEditor,
+    DetalleApoyoEditor
   },
   data() {
     return {
