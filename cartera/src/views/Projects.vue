@@ -26,7 +26,7 @@ export default {
 
     onMounted(async () => {
       try {
-        const response = await fetch(proyectosUrl);
+        const response = await fetch('https://kth2025backend-production.up.railway.app/todo');
         if (!response.ok) {
           throw new Error('Error al obtener los proyectos');
         }
