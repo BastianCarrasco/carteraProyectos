@@ -155,11 +155,82 @@ export default {
 </script>
 
 <style scoped>
-/* Tus estilos CSS existentes */
 .lista-con-edicion {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Fuerza 3 columnas fijas */
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
   width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
 }
+
+.item-n {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  word-break: break-word;
+}
+
+.vista-normal,
+.vista-edicion {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-edicion {
+  padding: 6px 10px;
+  font-size: 14px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.btn-accion {
+  padding: 4px 8px;
+  font-size: 13px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.btn-accion.eliminar {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-accion.guardar {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.btn-accion.cancelar {
+  background-color: #95a5a6;
+  color: white;
+}
+
+.btn-nuevo {
+  margin-bottom: 16px;
+  padding: 8px 12px;
+  font-size: 14px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 </style>
