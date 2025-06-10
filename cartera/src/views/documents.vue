@@ -1,7 +1,8 @@
+<!-- Vista de Proyectos (ProjectsView.vue) -->
 <template>
   <div class="projects">
     <h1>Lista de Proyectos</h1>
-    <button @click="generatePDF" class="pdf-button">
+    <button @click="generarPDFDesdeOtroComponente" class="pdf-button">
       Generar Reporte PDF
     </button>
     
@@ -17,7 +18,8 @@
 import { ref, onMounted } from 'vue';
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS
+import { generarInformeProyectos } from '../plugins/pdfGenerator.js'; // Importa la función del otro componente
+const proyectosUrl = import.meta.env.VITE_API_URL_AllPROYECTOS
 
 export default {
   name: 'ProjectsView',
@@ -56,128 +58,54 @@ export default {
       }).format(amount);
     };
 
-const generatePDF = () => {
-  try {
-    // Configurar documento en tamaño carta (letter)
-    const doc = new jsPDF({
-      unit: 'mm',
-      format: 'letter'
-    });
+    const unificarAcademicosPorNombre = (proyectos) => {
+      const proyectosUnificados = [];
+      const nombresProcesados = new Set();
 
-    // Establecer márgenes (izquierdo, derecho, superior, inferior)
-    const marginLeft = 15;
-    const marginRight = 15;
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const maxWidth = pageWidth - marginLeft - marginRight;
+      proyectos.forEach(proyecto => {
+        if (!nombresProcesados.has(proyecto.nombre)) {
+          nombresProcesados.add(proyecto.nombre);
+          const proyectosMismoNombre = proyectos.filter(p => p.nombre === proyecto.nombre);
+          const academicosUnidos = new Set();
 
-    // Estilo general
-    doc.setFont('helvetica');
-    doc.setTextColor(40);
-    
-    // Título centrado
-    doc.setFontSize(16);
-    doc.setTextColor(0, 60, 120);
-    doc.text('INFORME DETALLADO DE PROYECTOS', pageWidth / 2, 20, { align: 'center' });
-    
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}`, pageWidth / 2, 27, { align: 'center' });
-    
-    let yPosition = 35; // Posición vertical inicial después del título
-    
-    projects.value.forEach((proyecto, index) => {
-      // Verificar espacio disponible (tamaño carta: 279.4 mm de altura)
-      if (yPosition > 260) { // Dejar margen inferior de ~20mm
-        doc.addPage('letter');
-        yPosition = 20; // Reiniciar posición en nueva página
-      }
-      
-      // Encabezado del proyecto con splitText para manejo de texto largo
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.setFont(undefined, 'bold');
-      
-      const titleLines = doc.splitTextToSize(proyecto.nombre, maxWidth);
-      titleLines.forEach(line => {
-        doc.text(line, marginLeft, yPosition);
-        yPosition += 7;
+          proyectosMismoNombre.forEach(p => {
+            if (p.academico) {
+              p.academico.split(',').forEach(acad => {
+                academicosUnidos.add(acad.trim());
+              });
+            }
+          });
+
+          // Crea un nuevo objeto proyecto con los académicos unidos
+          proyectosUnificados.push({
+            ...proyecto, // Copia las propiedades del primer proyecto
+            academico: Array.from(academicosUnidos).join(', ') // Reemplaza los académicos
+          });
+        }
       });
-      
-      // Datos del proyecto
-      doc.setFont(undefined, 'normal');
-      doc.setFontSize(10);
-      yPosition += 5;
-      
-      const datos = [
-        `• Facultad: ${proyecto.UA || 'N/A'}`,
-        `• Académico responsable: ${proyecto.Academico || 'N/A'} ${proyecto.jefe ? '(Jefe de proyecto)' : ''}`,
-        `• Monto adjudicado: ${formatCurrency(proyecto.monto)}`,
-        `• Fecha de postulación: ${formatDate(proyecto.fecha_postulacion)}`,
-        `• Tipo de convocatoria: ${proyecto.Tipo_Convo || 'N/A'}`,
-        `• Institución convocante: ${proyecto.Institucion_convocatoria || 'N/A'}`,
-        `• Nombre convocatoria: ${proyecto.Convocatoria || 'N/A'}`,
-        `• Comentarios: ${proyecto.comentarios || 'Ninguno'}`
-      ];
-      
-      // Procesar cada línea con splitText si es necesario
-      datos.forEach(linea => {
-        const lines = doc.splitTextToSize(linea, maxWidth);
-        lines.forEach(line => {
-          if (yPosition > 260) {
-            doc.addPage('letter');
-            yPosition = 20;
-          }
-          doc.text(line, marginLeft + 5, yPosition);
-          yPosition += 7;
-        });
-      });
-      
-      // Separador entre proyectos
-      doc.setDrawColor(200);
-      doc.line(marginLeft, yPosition + 3, pageWidth - marginRight, yPosition + 3);
-      yPosition += 10;
-    });
-    
-    // Estadísticas finales en nueva página
-    doc.addPage('letter');
-    doc.setFontSize(14);
-    doc.setTextColor(0, 60, 120);
-    doc.text('RESUMEN ESTADÍSTICO', pageWidth / 2, 20, { align: 'center' });
-    
-    doc.setFontSize(11);
-    doc.setTextColor(0);
-    
-    // Función auxiliar para agregar texto con manejo de páginas
-    const addTextWithPageCheck = (text, x, y) => {
-      if (y > 260) {
-        doc.addPage('letter');
-        return 20; // Nueva posición Y
-      }
-      doc.text(text, x, y);
-      return y + 7;
+        
+      return proyectosUnificados;
     };
-    
-    yPosition = addTextWithPageCheck(`• Total de proyectos: ${projects.value.length}`, marginLeft, 30);
-    yPosition = addTextWithPageCheck(`• Inversión total: ${formatCurrency(projects.value.reduce((sum, p) => sum + (p.monto || 0), 0))}`, marginLeft, yPosition);
-    
-    // Conteo por facultad
-    const facultades = {};
-    projects.value.forEach(p => {
-      facultades[p.UA] = (facultades[p.UA] || 0) + 1;
-    });
-    
-    yPosition = addTextWithPageCheck('• Proyectos por facultad:', marginLeft, yPosition);
-    
-    Object.entries(facultades).forEach(([fac, count]) => {
-      yPosition = addTextWithPageCheck(`   - ${fac}: ${count} proyectos`, marginLeft + 5, yPosition);
-    });
-    
-    doc.save('informe_detallado_proyectos.pdf');
-  } catch (err) {
-    console.error('Error al generar PDF:', err);
-    error.value = 'Error al generar el documento';
-  }
-};
+
+
+    const generarPDFDesdeOtroComponente = () => {
+      try {
+        if (!projects.value || projects.value.length === 0) {
+            error.value = "No hay proyectos para generar el PDF.";
+            return;
+        }
+
+        // Unificar académicos antes de generar el PDF
+        const proyectosParaPDF = unificarAcademicosPorNombre(projects.value);
+
+        // Llama a la función importada y pasa los datos de proyectos
+        generarInformeProyectos(proyectosParaPDF, formatDate, formatCurrency);
+
+      } catch (err) {
+        console.error('Error al generar PDF:', err);
+        error.value = 'Error al generar el documento';
+      }
+    };
 
     onMounted(fetchProjects);
 
@@ -185,7 +113,7 @@ const generatePDF = () => {
       projects,
       loading,
       error,
-      generatePDF,
+      generarPDFDesdeOtroComponente, // Cambiado a la función que usa el otro componente
       formatDate,
       formatCurrency
     };
