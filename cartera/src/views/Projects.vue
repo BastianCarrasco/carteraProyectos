@@ -12,7 +12,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import Lista from '@/components/proyectos/lista.vue';
-const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS
+const proyectosUrl = import.meta.env.VITE_API_URL_AllPROYECTOS
 
 export default {
   name: 'ProjectsView',
@@ -26,7 +26,7 @@ export default {
 
     onMounted(async () => {
       try {
-        const response = await fetch('https://kth2025backend-production.up.railway.app/todo');
+        const response = await fetch(proyectosUrl);
         if (!response.ok) {
           throw new Error('Error al obtener los proyectos');
         }

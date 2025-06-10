@@ -89,7 +89,7 @@ import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
-const proyectosUrl = import.meta.env.VITE_API_URL_PROYECTOS;
+const proyectosUrl = import.meta.env.VITE_API_URL_AllPROYECTOS
 const typeChart = ref(null);
 const unitChart = ref(null);
 const projectsUnitChart = ref(null);
