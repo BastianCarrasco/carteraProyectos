@@ -6,7 +6,7 @@ const tematicaUrl = import.meta.env.VITE_API_URL_ALLTEMATICAS;
 const convocatoriasUrl = import.meta.env.VITE_API_URL_CONVOCATORIAS;
 const academicosUrl= import.meta.env.VITE_API_URL_ACADEMICOS; 
 const UAURL = import.meta.env.VITE_API_URL_UA;
-const proyectosUrl = import.meta.env.VITE_API_URL_AllPROYECTOS
+const proyectos = import.meta.env.VITE_API_URL_AllPROYECTOS;
 const apoyos_tags = import.meta.env.VITE_API_URL_TAGS;
 
 export async function fetchTags() {
@@ -29,7 +29,7 @@ export async function fetchTags() {
 
 export async function fetchProyectos() {
   try {
-    const response = await fetch(proyectosUrl);
+    const response = await fetch(proyectos);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const contentType = response.headers.get('content-type');
     if (!contentType.includes('application/json')) {

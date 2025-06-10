@@ -14,6 +14,7 @@ import { ref, onMounted } from 'vue';
 import Lista from '@/components/proyectos/lista.vue';
 const proyectosUrl = import.meta.env.VITE_API_URL_AllPROYECTOS
 
+
 export default {
   name: 'ProjectsView',
   components: {
