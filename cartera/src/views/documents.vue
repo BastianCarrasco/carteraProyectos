@@ -1,15 +1,30 @@
 <!-- Vista de Proyectos (ProjectsView.vue) -->
 <template>
   <div class="projects">
-    <h1>Lista de Proyectos</h1>
-    <button @click="generarPDFDesdeOtroComponente" class="pdf-button">
-      Generar Reporte PDF
-    </button>
+    <h1>Formatos de documentos</h1>
+    <div class="button-group">  <!-- Contenedor para los botones -->
+      <button @click="generarPDFDesdeOtroComponente" class="pdf-button">
+        <img src="@/assets/iconos/pdf.png" alt="PDF" class="button-icon-large" />
+        <span>Generar Reporte PDF</span>
+      </button>
 
-    <button @click="exportarCSV" class="csv-button">Exportar CSV</button>
-    <button @click="exportarExcel" class="excel-button">Exportar Excel</button>
-    <button @click="exportarTXT" class="txt-button">Exportar TXT</button>  <!-- Nuevo botón -->
-    <button @click="exportarJSON" class="json-button">Exportar JSON</button> <!-- Nuevo botón -->
+      <button @click="exportarCSV" class="csv-button">
+        <img src="@/assets/iconos/csv.png" alt="CSV" class="button-icon-large" />
+        <span>Exportar CSV</span>
+      </button>
+      <button @click="exportarExcel" class="excel-button">
+        <img src="@/assets/iconos/exel.png" alt="Excel" class="button-icon-large" />
+        <span>Exportar Excel</span>
+      </button>
+      <button @click="exportarTXT" class="txt-button">
+        <img src="@/assets/iconos/txt.png" alt="TXT" class="button-icon-large" />
+        <span>Exportar TXT</span>
+      </button>
+      <button @click="exportarJSON" class="json-button">
+        <img src="@/assets/iconos/json.png" alt="JSON" class="button-icon-large" />
+        <span>Exportar JSON</span>
+      </button>
+    </div>
 
     <div v-if="loading" class="loading">Cargando proyectos...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
@@ -23,8 +38,7 @@
 import { ref, onMounted } from "vue";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-import { generarInformeProyectos } from "../plugins/pdfGenerator.js"; // Importa la función del otro componente
-import ExcelJS from "exceljs"; // Importa exceljs - IMPORTANTE
+import { useExportFunctions } from "../plugins/exportFunctions.js"; // Importa las funciones de exportación
 const proyectosUrl = import.meta.env.VITE_API_URL_AllPROYECTOS;
 
 export default {
@@ -64,36 +78,15 @@ export default {
       }).format(amount);
     };
 
-    const unificarAcademicosPorNombre = (proyectos) => {
-      const proyectosUnificados = [];
-      const nombresProcesados = new Set();
-
-      proyectos.forEach((proyecto) => {
-        if (!nombresProcesados.has(proyecto.nombre)) {
-          nombresProcesados.add(proyecto.nombre);
-          const proyectosMismoNombre = proyectos.filter(
-            (p) => p.nombre === proyecto.nombre
-          );
-          const academicosUnidos = new Set();
-
-          proyectosMismoNombre.forEach((p) => {
-            if (p.academico) {
-              p.academico.split(",").forEach((acad) => {
-                academicosUnidos.add(acad.trim());
-              });
-            }
-          });
-
-          // Crea un nuevo objeto proyecto con los académicos unidos
-          proyectosUnificados.push({
-            ...proyecto, // Copia las propiedades del primer proyecto
-            academico: Array.from(academicosUnidos).join(", "), // Reemplaza los académicos
-          });
-        }
-      });
-
-      return proyectosUnificados;
-    };
+    // 🚀 Obtener las funciones de exportación, pasando las dependencias
+    const {
+      unificarAcademicosPorNombre,
+      generarPDF,
+      exportarCSV: exportarCSVFn,
+      exportarExcel: exportarExcelFn,
+      exportarTXT: exportarTXTFn,
+      exportarJSON: exportarJSONFn,
+    } = useExportFunctions(projects, formatDate, formatCurrency, error);
 
     const generarPDFDesdeOtroComponente = () => {
       try {
@@ -106,179 +99,30 @@ export default {
         const proyectosParaPDF = unificarAcademicosPorNombre(projects.value);
 
         // Llama a la función importada y pasa los datos de proyectos
-        generarInformeProyectos(proyectosParaPDF, formatDate, formatCurrency);
+        generarPDF(proyectosParaPDF); // Ahora llama a la función local.
       } catch (err) {
         console.error("Error al generar PDF:", err);
         error.value = "Error al generar el documento";
       }
     };
 
-    // Función para exportar a CSV (CORREGIDA Y DENTRO DEL COMPONENTE)
+    //Reemplazo la llamadas para usar las funciones importadas y pasarle la data
     const exportarCSV = () => {
-      try {
-        if (!projects.value || projects.value.length === 0) {
-          error.value = "No hay proyectos para exportar.";
-          return;
-        }
-
-        // Unificar académicos antes de exportar CSV
-        const proyectosParaCSV = unificarAcademicosPorNombre(projects.value);
-
-        // Obtener los campos de los objetos
-        const campos = Object.keys(proyectosParaCSV[0]);
-
-        // Crear encabezado CSV
-        const csvHeader = campos.join(",") + "\n";
-
-        // Crear filas CSV
-        const csvRows = proyectosParaCSV.map((proyecto) =>
-          campos.map((campo) => {
-            const valor = proyecto[campo];
-            if (valor === null || valor === undefined) return "";
-            // Escapar comillas y comas
-            const valorString = String(valor).replace(/"/g, '""');
-            return `"${valorString}"`;
-          }).join(",")
-        ).join("\n");
-
-        // Combinar header + rows
-        const csvContent = csvHeader + csvRows;
-
-        // Crear un blob
-        const blob = new Blob([csvContent], {
-          type: "text/csv;charset=utf-8;",
-        });
-        const url = URL.createObjectURL(blob);
-
-        // Crear un enlace temporal y hacer click para descargar
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "proyectos.csv");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } catch (err) {
-        console.error("Error al exportar CSV:", err);
-        error.value = "Error al exportar el CSV.";
-      }
+      const proyectosParaCSV = unificarAcademicosPorNombre(projects.value);
+      exportarCSVFn(proyectosParaCSV);
+    };
+    const exportarExcel = () => {
+      const proyectosParaExcel = unificarAcademicosPorNombre(projects.value);
+      exportarExcelFn(proyectosParaExcel);
     };
 
-    // 🚀 Función para exportar a Excel
-    const exportarExcel = async () => {
-      try {
-        if (!projects.value || projects.value.length === 0) {
-          error.value = "No hay proyectos para exportar.";
-          return;
-        }
-
-        // Unificar académicos antes de exportar Excel
-        const proyectosParaExcel = unificarAcademicosPorNombre(projects.value);
-
-        const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet("Proyectos");
-
-        // Agregar encabezados
-        const campos = Object.keys(proyectosParaExcel[0]);
-        worksheet.addRow(campos);
-
-        // Agregar datos
-        proyectosParaExcel.forEach(proyecto => {
-          const fila = campos.map(campo => {
-            let valor = proyecto[campo];
-            if (valor === null || valor === undefined) {
-              valor = ''; // O puedes asignar un valor por defecto
-            }
-            return valor;
-          });
-          worksheet.addRow(fila);
-        });
-
-        // Ajustar el ancho de las columnas (opcional)
-        worksheet.columns.forEach(column => {
-          column.width = 20;
-        });
-
-        // Generar el archivo y descargarlo
-        const buffer = await workbook.xlsx.writeBuffer();
-        // Bun no tiene  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        // el mimetype es un poco diferente
-        const blob = new Blob([buffer], {
-           type: "application/octet-stream", // O el que funcione mejor en tu entorno.  Prueba con "application/vnd.ms-excel"
-        });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "proyectos.xlsx");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-      } catch (err) {
-        console.error("Error al exportar a Excel:", err);
-        error.value = "Error al exportar a Excel.";
-      }
-    };
-
-    // 🚀 Función para exportar a TXT
     const exportarTXT = () => {
-      try {
-        if (!projects.value || projects.value.length === 0) {
-          error.value = "No hay proyectos para exportar.";
-          return;
-        }
-
-        // Unificar académicos antes de exportar TXT
-        const proyectosParaTXT = unificarAcademicosPorNombre(projects.value);
-
-        const txtContent = proyectosParaTXT.map(proyecto => {
-          return Object.entries(proyecto)
-            .map(([key, value]) => `${key}: ${value !== null && value !== undefined ? value : ''}`) // Manejo de null/undefined
-            .join('\n');
-        }).join('\n\n'); // Doble salto de línea entre proyectos
-
-        const blob = new Blob([txtContent], { type: "text/plain;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "proyectos.txt");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-      } catch (err) {
-        console.error("Error al exportar a TXT:", err);
-        error.value = "Error al exportar el TXT.";
-      }
+      const proyectosParaTXT = unificarAcademicosPorNombre(projects.value);
+      exportarTXTFn(proyectosParaTXT);
     };
-
-    // 🚀 Función para exportar a JSON
     const exportarJSON = () => {
-      try {
-        if (!projects.value || projects.value.length === 0) {
-          error.value = "No hay proyectos para exportar.";
-          return;
-        }
-
-        // Unificar académicos antes de exportar JSON
-        const proyectosParaJSON = unificarAcademicosPorNombre(projects.value);
-
-        const jsonContent = JSON.stringify(proyectosParaJSON, null, 2); // 2 espacios de indentación
-
-        const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8;" });
-        const url = URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", "proyectos.json");
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-      } catch (err) {
-        console.error("Error al exportar a JSON:", err);
-        error.value = "Error al exportar a JSON.";
-      }
+      const proyectosParaJSON = unificarAcademicosPorNombre(projects.value);
+      exportarJSONFn(proyectosParaJSON);
     };
 
     onMounted(fetchProjects);
@@ -290,8 +134,8 @@ export default {
       generarPDFDesdeOtroComponente,
       exportarCSV,
       exportarExcel,
-      exportarTXT, // ✅  Función para exportar TXT
-      exportarJSON, // ✅  Función para exportar JSON
+      exportarTXT,
+      exportarJSON,
       formatDate,
       formatCurrency,
     };
@@ -302,104 +146,67 @@ export default {
 <style scoped>
 .projects {
   padding: 20px;
-  max-width: 1200px;
+  max-width: 100%;
   margin: 0 auto;
 }
-
-.pdf-button {
-  background-color: #2980b9;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  margin-bottom: 20px;
-  transition: background-color 0.3s;
+.button-group {
+    display: flex;
+    flex-wrap: wrap; /* Permite que los botones se envuelvan a la siguiente línea */
+    justify-content: center; /* Centra horizontalmente los botones */
+    gap: 10px; /* Espacio entre los botones */
+    
 }
 
-.pdf-button:hover {
-  background-color: #3498db;
-}
-
-.loading,
-.error {
-  padding: 20px;
-  text-align: center;
-  font-size: 18px;
-}
-
-.error {
-  color: #e74c3c;
-}
-
-.project-list {
-  margin-top: 20px;
-}
-.csv-button {
-  background-color: #27ae60;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  margin-left: 10px;
-  margin-bottom: 20px;
-  transition: background-color 0.3s;
-}
-
-.csv-button:hover {
-  background-color: #2ecc71;
-}
-.excel-button {
-  background-color: #16a085;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 16px;
-  margin-left: 10px;
-  margin-bottom: 20px;
-  transition: background-color 0.3s;
-}
-
-.excel-button:hover {
-  background-color: #18c9a4;
-}
-
-.txt-button {
-    background-color: #3498db;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-left: 10px;
-    margin-bottom: 20px;
-    transition: background-color 0.3s;
-  }
-
-  .txt-button:hover {
-    background-color: #2980b9;
-  }
-
+.pdf-button,
+.csv-button,
+.excel-button,
+.txt-button,
 .json-button {
-    background-color: #f39c12;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-left: 10px;
-    margin-bottom: 20px;
-    transition: background-color 0.3s;
-  }
+  background-color: #ff2504; /* Color por defecto, se cambiará con las clases individuales */
+  color: white;
+  padding: 10px; /* Menos padding vertical para que se vea mejor */
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px; /* Fuente un poco más pequeña */
+  text-align: center; /* Centra el texto */
+  width: 120px; /* Ancho fijo para los botones */
+  display: flex;
+  flex-direction: column; /* Apila el icono y el texto verticalmente */
+  align-items: center;  /* Centra horizontalmente el contenido */
+  justify-content: center;  /* Centra verticalmente el contenido */
+  transition: background-color 0.3s;
+}
 
-  .json-button:hover {
-    background-color: #f5b041;
-  }
+/* Estilos específicos para los botones, usando las clases*/
+.pdf-button { background-color: #ff2504; margin-right: 45px;  }
+.pdf-button:hover { background-color: #cc1f03; }
+
+.csv-button { background-color: #4a9a52; margin-right: 45px; } 
+.csv-button:hover { background-color: #3e8e45; }
+
+.excel-button { background-color: #16a085; margin-right: 45px; }
+.excel-button:hover { background-color: #18c9a4; }
+
+.txt-button { background-color: #3498db; margin-right: 45px; }
+.txt-button:hover { background-color: #2980b9; }
+
+.json-button { background-color: #f39c12; margin-right: 45px; }
+.json-button:hover { background-color: #e67e22; }
+
+
+.button-icon-large {  /* Clase para el icono más grande */
+  width: 48px; /* Ajusta el tamaño según tus necesidades */
+  height: 48px; /* Ajusta el tamaño según tus necesidades */
+  margin-bottom: 5px; /* Espacio entre el icono y el texto */
+}
+
+/* Opcional:  Ajustar el texto si es necesario */
+.pdf-button span,
+.csv-button span,
+.excel-button span,
+.txt-button span,
+.json-button span {
+  font-size: 12px; /* Tamaño de fuente para el texto */
+}
 </style>
