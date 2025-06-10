@@ -182,3 +182,52 @@ export const generarInformeProyectos = (proyectos, formatDate, formatCurrency) =
     alert('Error al generar el PDF: ' + err.message);
   }
 };
+
+
+export const exportarCSV = () => {
+  try {
+    if (!projects.value || projects.value.length === 0) {
+      error.value = "No hay proyectos para exportar.";
+      return;
+    }
+
+    // Unificar académicos antes de exportar CSV
+    const proyectosParaCSV = unificarAcademicosPorNombre(projects.value);
+
+    // Obtener los campos de los objetos
+    const campos = Object.keys(proyectosParaCSV[0]);
+
+    // Crear encabezado CSV
+    const csvHeader = campos.join(",") + "\n";
+
+    // Crear filas CSV
+    const csvRows = proyectosParaCSV.map(proyecto =>
+      campos.map(campo => {
+        const valor = proyecto[campo];
+        if (valor === null || valor === undefined) return "";
+        // Escapar comillas y comas
+        const valorString = String(valor).replace(/"/g, '""');
+        return `"${valorString}"`;
+      }).join(",")
+    ).join("\n");
+
+    // Combinar header + rows
+    const csvContent = csvHeader + csvRows;
+
+    // Crear un blob
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    // Crear un enlace temporal y hacer click para descargar
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "proyectos.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+  } catch (err) {
+    console.error("Error al exportar CSV:", err);
+    error.value = "Error al exportar el CSV.";
+  }
+};
