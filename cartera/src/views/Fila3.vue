@@ -87,7 +87,7 @@ export default {
         nombre: "",
         monto: null,
         fecha_postulacion: null,
-        comentarios: "",
+        comentarios: null,
         id_unidad: null,
         id_convocatoria: null,
         id_tematica: null,
