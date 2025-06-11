@@ -23,7 +23,13 @@
       <div>
         <strong>Tipo de Apoyo:</strong>
         {{ nombreApoyo(proyecto.id_apoyo) }}
-        <span v-if="proyecto.tags_parciales && proyecto.tags_parciales.length">
+        <span
+          v-if="
+            proyecto.id_apoyo !== 1 &&
+            proyecto.tags_parciales &&
+            proyecto.tags_parciales.length
+          "
+        >
           -
           <span v-for="(tag, index) in proyecto.tags_parciales" :key="index">
             {{ tag
@@ -43,7 +49,7 @@
       </div>
     </div>
     <button @click="crearProyecto" class="crear-proyecto-btn">
-      Crear Proyecto en Backend
+      Crear Proyecto
     </button>
 
     <div v-if="respuestaBackend" class="respuesta-backend">
@@ -93,7 +99,8 @@ export default {
         id_tematica: null,
         id_apoyo: null,
         id_estatus: null,
-        id_academico: [],
+        academicos: [],
+        tags_parciales: [] //initialize tags_parciales
       }),
     },
   },
@@ -157,6 +164,8 @@ export default {
       this.errorBackend = null;
       this.respuestaBackend = null;
 
+      // *** No need to initialize idTodo, just use this.proyecto.id_apoyo ***
+
       try {
         const proyectoData = {
           nombre: this.proyecto.nombre,
@@ -166,9 +175,12 @@ export default {
           unidad: this.proyecto.id_unidad,
           id_convocatoria: this.proyecto.id_convocatoria || null,
           id_tematica: this.proyecto.id_tematica,
+          //*** use this.proyecto.id_apoyo ***
           id_apoyo: this.proyecto.id_apoyo || null,
           id_estatus: this.proyecto.id_estatus,
           id_kth: null,
+          // Include tags if present, use .join(', ') for backend format
+          tags_parciales: this.proyecto.id_apoyo !== 1 && this.proyecto.tags_parciales ? this.proyecto.tags_parciales.join(', ') : null
         };
 
         const proyectoResponse = await fetch(

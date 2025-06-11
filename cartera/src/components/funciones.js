@@ -39,7 +39,7 @@ export function nombreApoyo(id, apoyos) {
     
   if (!id) return "No asignado";
   if (id=== 1 ) return "TODO";
-  if (id > 1) return "PARCIAL";
+  if (id!=1) return "PARCIAL";
   const apoyo = apoyos.find((a) => a.id_apoyo === id);
   return apoyo ? apoyo.detalle : `ID ${id}`;
 }

@@ -14,6 +14,11 @@
             {{ nombre }}
           </option>
         </select>
+
+        <h3>
+          Advertencia: Actualmente, solo la función de eliminar proyecto está operativa. La edición de atributos
+          está en desarrollo, pero esta vista previa muestra cómo se implementarán las futuras modificaciones.
+        </h3>
       </div>
 
       <div class="lista-con-edicion" v-if="proyectoSeleccionado">

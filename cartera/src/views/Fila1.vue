@@ -300,11 +300,21 @@ export default {
         this.emitirCambio();
       }
     },
-   emitirCambio() {
-  const datosConTags = {
-    ...this.local,
-    tags_parciales: this.tagsSeleccionados
-  };
+emitirCambio() {
+  let datosConTags; // Use let so we can conditionally assign it.
+  if (this.local.id_apoyo === 1) {
+    // If "Total" support is selected, DO NOT send tags_parciales
+    datosConTags = {
+      ...this.local,
+      //  Do NOT include tags_parciales in this case
+    };
+  } else {
+    // Otherwise, include tags_parciales (Parcial support)
+    datosConTags = {
+      ...this.local,
+      tags_parciales: this.tagsSeleccionados,
+    };
+  }
   this.$emit("actualizar", datosConTags);
 }
 ,
@@ -365,7 +375,7 @@ export default {
       const payload = { tipo: 2, detalle };
 
       try {
-        const res = await fetch("https://kth2025backend-production.up.railway.app/crearApoyo", {
+        const res = await fetch("https://kth2025backend-production.up.railway.app/tag", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

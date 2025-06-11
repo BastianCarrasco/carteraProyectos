@@ -1,10 +1,19 @@
 <template>
   <div class="columna-derecha">
     <div class="editor-container">
+      <div class="tags-description">
+        <h3 class="tags-title">Tags:</h3>
+        <p class="tags-text">
+          Los tags son atributos que describen un apoyo parcial, permitiendo categorizar sus características mediante opciones predefinidas.
+          Para ver su uso, diríjase a la vista "Crear Proyecto" y seleccione "Parcial" en el campo "Tipo de Apoyo".
+        </p>
+      </div>
       <div class="acciones-superiores">
         <button @click="nuevoTag" class="btn-nuevo">
           + Nuevo Tag
         </button>
+
+       
       </div>
 
       <div class="lista-con-edicion">
