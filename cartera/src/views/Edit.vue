@@ -9,8 +9,13 @@
           <th>Nombre</th>
           <th>Monto</th>
           <th>Fecha Postulación</th>
+          <th>Tematica</th>
+          <th>Estatus</th>
           <th>Convocatoria</th>
           <th>Institución</th>
+          <th>Detalle de Apoyo</th>
+          <th>Apoyo</th>
+          <th>Comentario</th>
         </tr>
       </thead>
       <tbody>
@@ -19,8 +24,13 @@
           <td>{{ proyecto.nombre }}</td>
           <td>${{ proyecto.monto.toLocaleString() }}</td>
           <td>{{ formatFecha(proyecto.fecha_postulacion) }}</td>
+          <td>{{ proyecto.tematica }}</td>
+          <td>{{ proyecto.estatus }}</td>
           <td>{{ proyecto.convocatoria }}</td>
           <td>{{ proyecto.institucion }}</td>
+          <td>{{ proyecto.detalle_apoyo }}</td>
+          <td>{{ proyecto.apoyo }}</td>
+          <td>{{ proyecto.comentarios }}</td>
         </tr>
       </tbody>
     </table>
@@ -33,7 +43,8 @@
 import { ref, onMounted } from 'vue';
 
 const proyectos = ref([]);
-const url = 'https://elysia-bunbackend-production.up.railway.app/proyectos/crudo';
+const url = 'https://elysia-bunbackend-production.up.railway.app/proyectos/data';
+const urlacademicos = 'https://elysia-bunbackend-production.up.railway.app/academicos';
 
 const formatFecha = (fechaStr) => {
   const fecha = new Date(fechaStr);

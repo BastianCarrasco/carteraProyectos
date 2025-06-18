@@ -8,7 +8,8 @@
 <script>
 import { ref, onMounted } from 'vue';
 import Lista from '@/components/proyectos/lista.vue';
-const proyectosUrl = 'https://elysia-bunbackend-production.up.railway.app/proyectos'
+const proyectosUrl = import.meta.env.VITE_API_URL_AllPROYECTOS
+
 
 export default {
   name: 'ProjectsView',
