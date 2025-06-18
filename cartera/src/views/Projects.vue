@@ -1,19 +1,14 @@
 <template>
   <div class="projects-view">
 
-    <Lista 
-      :proyectos="proyectos" 
-      :loading="loading" 
-      :error="error" 
-    />
+    <Lista :proyectos="proyectos" :loading="loading" :error="error" />
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
 import Lista from '@/components/proyectos/lista.vue';
-const proyectosUrl = import.meta.env.VITE_API_URL_AllPROYECTOS
-
+const proyectosUrl = 'https://elysia-bunbackend-production.up.railway.app/proyectos'
 
 export default {
   name: 'ProjectsView',
@@ -52,13 +47,16 @@ export default {
 <style scoped>
 .projects-view {
   padding: 20px;
-  width: 100%; /* Ocupa todo el ancho */
+  width: 100%;
+  /* Ocupa todo el ancho */
   margin: 0;
-  max-width: none; /* Elimina el límite máximo de ancho */
+  max-width: none;
+  /* Elimina el límite máximo de ancho */
 }
 
 .projects-view h1 {
   max-width: 1200px;
-  margin: 0 auto 20px auto; /* Centra solo el título */
+  margin: 0 auto 20px auto;
+  /* Centra solo el título */
 }
 </style>
