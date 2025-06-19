@@ -1,186 +1,162 @@
-<!-- Componente Modal (EditarProyectoModal.vue) -->
 <template>
-  <div class="modal" :class="{ 'is-active': show }">
-    <div class="modal-background" @click="cerrarModal"></div>
-    <div class="modal-card">
-      <header class="modal-card-head">
-        <p class="modal-card-title">Editar {{ campoAEditar ? campoAEditar.label : '' }}</p>
-        <button class="delete" aria-label="close" @click="cerrarModal"></button>
-      </header>
-      <section class="modal-card-body">
-        <div v-if="campoAEditar">
-          <!-- Campos de entrada basados en el campo a editar -->
-          <div v-if="campoAEditar.type === 'text'" class="field">
-            <label class="label">{{ campoAEditar.label }}</label>
-            <input
-              class="input"
-              type="text"
-              v-model="localValorEditado"
-              :placeholder="campoAEditar.label"
-            />
-          </div>
-          <div v-else-if="campoAEditar.type === 'number'" class="field">
-            <label class="label">{{ campoAEditar.label }}</label>
-            <input class="input" type="number" v-model.number="localValorEditado" />
-          </div>
-          <div v-else-if="campoAEditar.type === 'textarea'" class="field">
-            <label class="label">{{ campoAEditar.label }}</label>
-            <textarea class="textarea" v-model="localValorEditado"></textarea>
-          </div>
-          <div v-else-if="campoAEditar.type === 'select'" class="field">
-            <label class="label">{{ campoAEditar.label }}</label>
-            <select class="input" v-model="localValorEditado">
-              <option v-for="opcion in campoAEditar.opciones" :key="opcion.value" :value="opcion.value">
-                {{ opcion.label }}
-              </option>
-            </select>
-          </div>
+  <div v-if="show" class="modal-overlay">
+    <div class="modal-content-lg">
+      <h3>Editar Proyecto: {{ editedProject?.nombre }}</h3>
+      <form @submit.prevent="onSave">
+        <!-- Nombre -->
+        <div class="modal-form-group">
+          <label for="edit-nombre">Nombre:</label>
+          <input id="edit-nombre" v-model="editedProject.nombre" required />
         </div>
-      </section>
-      <footer class="modal-card-foot">
-        <button class="button is-success" @click="guardarCambio" :disabled="!campoAEditar">
-          Guardar
-        </button>
-        <button class="button" @click="cerrarModal">Cancelar</button>
-      </footer>
+
+        <!-- Temática -->
+        <div class="modal-form-group">
+          <label for="edit-tematica">Temática:</label>
+          <select id="edit-tematica" v-model="editedProject.tematica">
+            <option v-for="tematica in tematicasOptions" :key="tematica.id_tematica" :value="tematica.id_tematica">
+              {{ tematica.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Estatus -->
+        <div class="modal-form-group">
+          <label for="edit-estatus">Estatus:</label>
+          <select id="edit-estatus" v-model="editedProject.estatus">
+            <option v-for="est in estatusOptions" :key="est.id_estatus" :value="est.id_estatus">
+              {{ est.tipo }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Apoyo -->
+        <div class="modal-form-group">
+          <label for="edit-apoyo">Apoyo:</label>
+          <select id="edit-apoyo" v-model="editedProject.apoyo">
+            <option v-for="apoyo in apoyosOptions" :key="apoyo.id_apoyo" :value="apoyo.id_apoyo">
+              {{ apoyo.nombre }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Detalle Apoyo -->
+        <div class="modal-form-group">
+          <label for="edit-detalle-apoyo">Detalle de Apoyo:</label>
+          <input v-model="editedProject.detalle_apoyo" />
+        </div>
+
+        <!-- Monto -->
+        <div class="modal-form-group">
+          <label for="edit-monto">Monto:</label>
+          <input id="edit-monto" type="number" v-model.number="editedProject.monto" />
+        </div>
+
+        <!-- Convocatoria -->
+        <div class="modal-form-group">
+          <label for="edit-convocatoria">Convocatoria:</label>
+          <input id="edit-convocatoria" v-model="editedProject.convocatoria" />
+        </div>
+
+        <!-- Fecha -->
+        <div class="modal-form-group">
+          <label for="edit-fecha-postulacion">Fecha Postulación:</label>
+          <input id="edit-fecha-postulacion" type="date" v-model="editedProject.fecha_postulacion" />
+        </div>
+
+        <!-- Comentarios -->
+        <div class="modal-form-group">
+          <label for="edit-comentarios">Comentario:</label>
+          <textarea id="edit-comentarios" v-model="editedProject.comentarios"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="submit" class="boton-guardar">Guardar Cambios</button>
+          <button type="button" @click="onCancel" class="boton-cancelar">Cancelar</button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
 
-<script>
-export default {
-  props: {
-    show: {
-      type: Boolean,
-      required: true,
-    },
-    campoAEditar: {
-      type: Object,
-      default: null,
-    },
-    valorEditado: {
-      type: [String, Number], // Permite tanto String como Number
-      default: "",
-    },
-    proyectoSeleccionado: { // Recibe el proyecto seleccionado (por referencia)
-      type: Object,
-      required: false, // Cambiado a false porque no siempre se provee
-    },
-  },
-  data() {
-    return {
-      localValorEditado: this.valorEditado, // Inicializa con el valor recibido
-    };
-  },
-  watch: {
-    valorEditado(newValue) {
-      this.localValorEditado = newValue; // Actualiza el valor local cuando cambia la prop
-    },
-    show(newValue) {
-        if(!newValue) {
-            this.localValorEditado = this.valorEditado; //Resetea el valor cuando se cierra el modal
-        }
-    }
-  },
-  methods: {
-    cerrarModal() {
-      this.$emit("cerrarModal");
-      this.localValorEditado = this.valorEditado; //Reestablece el valor local al cerrar
-    },
-    guardarCambio() {
-      this.$emit("guardarCambioIndividual", this.localValorEditado);
-    },
-  },
-};
+<script setup>
+defineProps({
+  show: Boolean,
+  editedProject: Object,
+  tematicasOptions: Array,
+  estatusOptions: Array,
+  apoyosOptions: Array
+})
+
+const emit = defineEmits(['save', 'cancel'])
+
+const onSave = () => {
+  emit('save')
+}
+
+const onCancel = () => {
+  emit('cancel')
+}
 </script>
 
 <style scoped>
-/* Tus estilos existentes pueden permanecer igual */
-/* Estilos para el modal (los mismos que antes) */
-.modal {
+.modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); /* Fondo semi-transparente */
-  display: none;
-  align-items: center;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
   justify-content: center;
-  z-index: 10; /* Asegura que esté por encima de otros elementos */
-}
-
-.modal.is-active {
-  display: flex;
-}
-
-.modal-card {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  width: 80%; /* Ajusta el ancho según tus necesidades */
-  max-width: 600px;
-  position: relative;
-}
-
-.modal-card-head,
-.modal-card-foot {
-  padding: 1rem;
-  border-bottom: 1px solid #eee;
-}
-
-.modal-card-head {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  z-index: 9999;
 }
 
-.modal-card-body {
-  padding: 1rem;
+.modal-content-lg {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
 }
 
-.modal-card-foot {
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid #eee;
-}
-
-.field {
+.modal-form-group {
   margin-bottom: 1rem;
 }
 
-.label {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+.modal-form-group label {
   display: block;
+  font-weight: bold;
 }
 
-.input,
-.textarea,
-.select {
+.modal-form-group input,
+.modal-form-group select,
+.modal-form-group textarea {
   width: 100%;
-  padding: 0.5rem;
-  border: 1px solid #ccc;
+  padding: 8px;
   border-radius: 4px;
-  font-size: 1rem;
+  border: 1px solid #ccc;
 }
 
-.button {
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.boton-guardar {
+  background-color: #28a745;
+  color: white;
   padding: 0.5rem 1rem;
   border: none;
   border-radius: 4px;
-  background-color: #007bff;
-  color: #fff;
-  cursor: pointer;
-  margin-left: 0.5rem;
 }
 
-.button:hover {
-  opacity: 0.8;
-}
-
-.button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.boton-cancelar {
+  background-color: #dc3545;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
 }
 </style>

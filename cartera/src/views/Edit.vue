@@ -71,128 +71,11 @@
     <p v-else>Cargando proyectos...</p>
 
     <!-- Modal de Edición Principal -->
-    <div v-if="showEditModal" class="modal-overlay">
-      <div class="modal-content-lg">
-        <h3>Editar Proyecto: {{ editedProject?.nombre }}</h3>
-        <form @submit.prevent="saveChanges">
-          <div class="modal-form-group">
-            <label for="edit-nombre">Nombre:</label>
-            <input id="edit-nombre" v-model="editedProject.nombre" required />
-          </div>
-
-          <div class="modal-form-group">
-            <label for="edit-tematica">Temática:</label>
-            <select id="edit-tematica" v-model="editedProject.tematica">
-              <option v-for="tematica in tematicasOptions" :key="tematica.id_tematica" :value="tematica.id_tematica">
-                {{ tematica.nombre }}
-              </option>
-            </select>
-          </div>
-
-          <div class="modal-form-group">
-            <label for="edit-estatus">Estatus:</label>
-            <select id="edit-estatus" v-model="editedProject.estatus">
-              <option v-for="est in estatusOptions" :key="est.id_estatus" :value="est.id_estatus">
-                {{ est.tipo }}
-              </option>
-            </select>
-          </div>
-
-          <div class="modal-form-group">
-            <label for="edit-apoyo">Apoyo:</label>
-            <select id="edit-apoyo" v-model="editedProject.apoyo">
-              <option v-for="apoyo in apoyosOptions" :key="apoyo.id_apoyo" :value="apoyo.id_apoyo">
-                {{ apoyo.nombre }}
-              </option>
-            </select>
-          </div>
-
-          <div class="modal-form-group">
-            <label for="edit-detalle-apoyo">Detalle de Apoyo:</label>
-            <!-- Input o botón de modal condicional aquí -->
-            <input v-if="getApoyoNombre(editedProject.apoyo) === 'TOTAL'" v-model="editedProject.detalle_apoyo" readonly
-              class="readonly-input" />
-            <div v-else-if="getApoyoNombre(editedProject.apoyo) === 'PARCIAL'" class="tags-input-group">
-              <input type="text" :value="editedProject.detalle_apoyo" readonly placeholder="Seleccionar tags..."
-                class="readonly-input" />
-              <button type="button" @click="openTagsModal" class="boton-seleccionar-tags">
-                Seleccionar Tags
-              </button>
-            </div>
-            <input v-else v-model="editedProject.detalle_apoyo" />
-          </div>
-
-          <div class="modal-form-group">
-            <label for="edit-monto">Monto:</label>
-            <input id="edit-monto" type="number" v-model.number="editedProject.monto" />
-          </div>
-
-          <div class="modal-form-group">
-            <label>Unidad:</label>
-            <div class="unidad-select-group">
-              <select v-model="editedProject.selectedParentUnitId" @change="loadSubUnitsForEdit"
-                class="parent-unit-select">
-                <option value="">Seleccione una unidad padre</option>
-                <option v-for="unidad in unidadesPadre" :key="unidad.id_unidad" :value="unidad.id_unidad">
-                  {{ unidad.nombre }}
-                </option>
-              </select>
-              <select v-if="currentSubUnits.length > 0" v-model="editedProject.unidad" class="sub-unit-select">
-                <option value="">Seleccione una sub-unidad</option>
-                <option v-for="sub in currentSubUnits" :key="sub.id_unidad" :value="sub.nombre">
-                  {{ sub.nombre }}
-                </option>
-              </select>
-              <!-- Opción para la unidad padre si esta puede ser la unidad final -->
-              <div v-if="
-                editedProject.selectedParentUnitId &&
-                currentSubUnits.length === 0
-              ">
-                <input type="radio" :id="'radio-unidad-padre-' + editedProject.selectedParentUnitId"
-                  :value="getUnidadNombre(editedProject.selectedParentUnitId)" v-model="editedProject.unidad" />
-                <label :for="'radio-unidad-padre-' + editedProject.selectedParentUnitId">
-                  {{ getUnidadNombre(editedProject.selectedParentUnitId) }}
-                  (Unidad Final)
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div class="modal-form-group">
-            <label for="edit-convocatoria">Convocatoria:</label>
-            <input id="edit-convocatoria" v-model="editedProject.convocatoria" />
-          </div>
-
-          <div class="modal-form-group">
-            <label for="edit-fecha-postulacion">Fecha Postulación:</label>
-            <input id="edit-fecha-postulacion" type="date" v-model="editedProject.fecha_postulacion" />
-          </div>
-
-          <div class="modal-form-group">
-            <label for="edit-institucion">Institución:</label>
-            <select id="edit-institucion" v-model="editedProject.institucion">
-              <option v-for="inst in institucionesOptions" :key="inst.id" :value="inst.id">
-                {{ inst.nombre }}
-              </option>
-            </select>
-          </div>
-
-          <div class="modal-form-group">
-            <label for="edit-comentarios">Comentario:</label>
-            <textarea id="edit-comentarios" v-model="editedProject.comentarios"></textarea>
-          </div>
-
-          <div class="modal-actions">
-            <button type="submit" class="boton-guardar">
-              Guardar Cambios
-            </button>
-            <button type="button" @click="cancelEditModal" class="boton-cancelar">
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+    <EditarProyectoModal :show="showEditModal" :editedProject="editedProject" :tematicasOptions="tematicasOptions"
+      :estatusOptions="estatusOptions" :apoyosOptions="apoyosOptions" :unidades="unidades"
+      :unidadesPadre="unidadesPadre" :currentSubUnits="currentSubUnits" :institucionesOptions="institucionesOptions"
+      :tagsOptions="tagsOptions" :selectedTags="selectedTags" :tempSelectedTags="tempSelectedTags" @save="saveChanges"
+      @cancel="cancelEditModal" @load-sub-units="loadSubUnitsForEdit" @open-tags-modal="openTagsModal" />
 
     <!-- Modal para la selección de Tags -->
     <div v-if="showTagsModal" class="modal-overlay">
@@ -218,6 +101,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import '../assets/Proyecto_styles/ecxel.css'; // Asegúrate de que esta ruta sea correcta
+import EditarProyectoModal from '@/components/ITEMS/EditarProyectoModal.vue';
 
 const proyectos = ref([]);
 const academicosPorProyecto = ref([]);
@@ -280,7 +164,7 @@ const getInstitucionNombre = (idInstitucion) => {
 
 const getApoyoNombre = (idApoyo) => {
   const apoyo = apoyosOptions.value.find((a) => a.id_apoyo === idApoyo);
-  return apoyo ? apoyo.nombre : '';
+  return apoyo ? apoyo.nombre : idApoyo;
 };
 
 const getTematicaNombre = (idTematica) => {
@@ -543,7 +427,9 @@ const saveChanges = async () => {
       // Obtener ID de la unidad por nombre
       unidad: unidades.value.find(u => u.nombre === editedProject.value.unidad)?.id_unidad || null,
       // Obtener ID de la temática
-      id_tematica: tematicasOptions.value.find(t => t.nombre === editedProject.value.tematica)?.id_tematica || null,
+      id_tematica: tematicasOptions.value.find(t => t.nombre === editedProject.value.tematica)
+        ? tematicasOptions.value.find(t => t.nombre === editedProject.value.tematica).id_tematica
+        : editedProject.value.tematica,
       // Obtener ID del estatus
       id_estatus: estatusOptions.value.find(e => e.tipo === editedProject.value.estatus)?.id_estatus || null,
       id_kth: null,
@@ -553,7 +439,9 @@ const saveChanges = async () => {
       inst_conv: institucionesOptions.value.find(i => i.nombre === editedProject.value.institucion)?.id || null,
       detalle_apoyo: editedProject.value.detalle_apoyo,
       // Obtener ID del apoyo
-      apoyo: apoyosOptions.value.find(a => a.nombre === editedProject.value.apoyo)?.id_apoyo || null
+      apoyo: apoyosOptions.value.find(a => a.nombre === editedProject.value.apoyo)
+        ? apoyosOptions.value.find(a => a.nombre === editedProject.value.apoyo).id_apoyo
+        : editedProject.value.apoyo,
     };
 
     console.log('JSON a enviar:', JSON.stringify(requestBody, null, 2));
@@ -696,24 +584,4 @@ onMounted(async () => {
 <!-- Asumiendo que tus estilos están en `src/assets/Proyecto_styles/ecxel.css` -->
 <!-- No se incluye aquí ya que es un archivo externo -->
 
-<style>
-/* Agrega estos estilos a tu archivo ecxel.css o un bloque <style> si no existe el archivo */
-.boton-eliminar {
-  background-color: #dc3545;
-  /* Rojo */
-  color: white;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  margin-left: 5px;
-  /* Espacio entre editar y eliminar */
-  transition: background-color 0.3s ease;
-}
-
-.boton-eliminar:hover {
-  background-color: #c82333;
-  /* Rojo más oscuro al pasar el mouse */
-}
-</style>
+<style></style>

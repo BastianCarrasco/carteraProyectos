@@ -1,15 +1,14 @@
 <template>
   <div class="projects-view">
-
     <Lista :proyectos="proyectos" :loading="loading" :error="error" />
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
-import Lista from '@/components/proyectos/lista.vue';
-const proyectosUrl = import.meta.env.VITE_API_URL_AllPROYECTOS
+import Lista from '../components/proyectos/lista.vue';
 
+const proyectosUrl = 'https://elysia-bunbackend-production.up.railway.app/funciones/data';
 
 export default {
   name: 'ProjectsView',
@@ -24,17 +23,23 @@ export default {
     onMounted(async () => {
       try {
         const response = await fetch(proyectosUrl);
-        if (!response.ok) {
-          throw new Error('Error al obtener los proyectos');
-        }
         const data = await response.json();
-        if (data.success) {
+
+        // Manejo de respuesta directa (sin propiedad 'success')
+        if (Array.isArray(data)) {
+          proyectos.value = data;
+        }
+        // Manejo de respuesta con estructura {success, data}
+        else if (data.success && Array.isArray(data.data)) {
           proyectos.value = data.data;
-        } else {
-          throw new Error('La respuesta no fue exitosa');
+        }
+        // Respuesta inesperada
+        else {
+          throw new Error('Formato de respuesta no reconocido');
         }
       } catch (err) {
-        error.value = err.message;
+        error.value = `Error al cargar proyectos: ${err.message}`;
+        console.error('Error fetching projects:', err);
       } finally {
         loading.value = false;
       }
@@ -49,15 +54,16 @@ export default {
 .projects-view {
   padding: 20px;
   width: 100%;
-  /* Ocupa todo el ancho */
-  margin: 0;
-  max-width: none;
-  /* Elimina el límite máximo de ancho */
+  margin: 0 auto;
+  max-width: 1400px;
 }
 
 .projects-view h1 {
-  max-width: 1200px;
-  margin: 0 auto 20px auto;
-  /* Centra solo el título */
+  margin: 0 0 30px 0;
+  color: #2c3e50;
+  text-align: center;
+  font-size: 2.2rem;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f0f0f0;
 }
 </style>
