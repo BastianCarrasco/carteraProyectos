@@ -10,7 +10,7 @@
           <th>Estatus</th>
           <th>Apoyo</th>
           <th>Detalle de Apoyo</th>
-          <th>Monto</th>
+          <th>Monto MM</th>
           <th>Académicos</th>
           <th>Unidad</th>
           <th>Convocatoria</th>
@@ -21,59 +21,115 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="proyecto in proyectos" :key="proyecto.id_proyecto"
-          :class="{ 'fila-proyecto': true, 'fila-editando': editingRowId === proyecto.id_proyecto }">
+        <tr v-for="proyecto in proyectos" :key="proyecto.id_proyecto" class="fila-proyecto">
           <!-- Nombre -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.nombre }}</span>
-            <input v-else v-model="editedProject.nombre" required>
-          </td>
+          <td>{{ proyecto.nombre }}</td>
           <!-- Tematica -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.tematica }}</span>
-            <input v-else v-model="editedProject.tematica">
-          </td>
+          <td>{{ getTematicaNombre(proyecto.tematica) }}</td>
           <!-- Estatus -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ getEstatusNombre(proyecto.estatus) }}</span>
-            <select v-else v-model="editedProject.estatus">
-              <option v-for="est in estatusOptions" :key="est.id_estatus" :value="est.id_estatus">
-                {{ est.tipo }}
-              </option>
-            </select>
-          </td>
+          <td>{{ getEstatusNombre(proyecto.estatus) }}</td>
           <!-- Apoyo -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ getApoyoNombre(proyecto.apoyo) }}</span>
-            <select v-else v-model="editedProject.apoyo">
-              <option v-for="apoyo in apoyosOptions" :key="apoyo.id_apoyo" :value="apoyo.id_apoyo">
-                {{ apoyo.nombre }}
-              </option>
-            </select>
-          </td>
+          <td>{{ getApoyoNombre(proyecto.apoyo) }}</td>
           <!-- Detalle de Apoyo -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.detalle_apoyo }}</span>
-            <input v-else v-model="editedProject.detalle_apoyo">
-          </td>
+          <td>{{ proyecto.detalle_apoyo }}</td>
           <!-- Monto -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">${{ proyecto.monto?.toLocaleString() }}</span>
-            <input v-else type="number" v-model.number="editedProject.monto">
-          </td>
+          <td>${{ (proyecto.monto ? proyecto.monto / 1000000 : 0).toLocaleString() }}</td>
           <!-- Académicos -->
           <td>
             <ul v-if="getAcademicosForProject(proyecto.id_proyecto).length">
-              <li v-for="(profesor, index) in getAcademicosForProject(proyecto.id_proyecto)" :key="index">
+              <li v-for="(profesor, index) in getAcademicosForProject(
+                proyecto.id_proyecto,
+              )" :key="index">
                 {{ profesor }}
               </li>
             </ul>
             <span v-else>-</span>
           </td>
           <!-- Unidad -->
+          <td>{{ proyecto.unidad }}</td>
+          <!-- Convocatoria -->
+          <td>{{ proyecto.convocatoria }}</td>
+          <!-- Fecha Postulación -->
+          <td>{{ formatFecha(proyecto.fecha_postulacion) }}</td>
+          <!-- Institución -->
+          <td>{{ getInstitucionNombre(proyecto.institucion) }}</td>
+          <!-- Comentario -->
+          <td>{{ proyecto.comentarios }}</td>
+          <!-- Acciones -->
           <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.unidad }}</span>
-            <div v-else class="unidad-select-group">
+            <button @click="openEditModal(proyecto)" class="boton-editar">
+              Editar
+            </button>
+            <button @click="confirmDelete(proyecto)" class="boton-eliminar">
+              Eliminar
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p v-else>Cargando proyectos...</p>
+
+    <!-- Modal de Edición Principal -->
+    <div v-if="showEditModal" class="modal-overlay">
+      <div class="modal-content-lg">
+        <h3>Editar Proyecto: {{ editedProject?.nombre }}</h3>
+        <form @submit.prevent="saveChanges">
+          <div class="modal-form-group">
+            <label for="edit-nombre">Nombre:</label>
+            <input id="edit-nombre" v-model="editedProject.nombre" required />
+          </div>
+
+          <div class="modal-form-group">
+            <label for="edit-tematica">Temática:</label>
+            <select id="edit-tematica" v-model="editedProject.tematica">
+              <option v-for="tematica in tematicasOptions" :key="tematica.id_tematica" :value="tematica.id_tematica">
+                {{ tematica.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="modal-form-group">
+            <label for="edit-estatus">Estatus:</label>
+            <select id="edit-estatus" v-model="editedProject.estatus">
+              <option v-for="est in estatusOptions" :key="est.id_estatus" :value="est.id_estatus">
+                {{ est.tipo }}
+              </option>
+            </select>
+          </div>
+
+          <div class="modal-form-group">
+            <label for="edit-apoyo">Apoyo:</label>
+            <select id="edit-apoyo" v-model="editedProject.apoyo">
+              <option v-for="apoyo in apoyosOptions" :key="apoyo.id_apoyo" :value="apoyo.id_apoyo">
+                {{ apoyo.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <div class="modal-form-group">
+            <label for="edit-detalle-apoyo">Detalle de Apoyo:</label>
+            <!-- Input o botón de modal condicional aquí -->
+            <input v-if="getApoyoNombre(editedProject.apoyo) === 'TOTAL'" v-model="editedProject.detalle_apoyo" readonly
+              class="readonly-input" />
+            <div v-else-if="getApoyoNombre(editedProject.apoyo) === 'PARCIAL'" class="tags-input-group">
+              <input type="text" :value="editedProject.detalle_apoyo" readonly placeholder="Seleccionar tags..."
+                class="readonly-input" />
+              <button type="button" @click="openTagsModal" class="boton-seleccionar-tags">
+                Seleccionar Tags
+              </button>
+            </div>
+            <input v-else v-model="editedProject.detalle_apoyo" />
+          </div>
+
+          <div class="modal-form-group">
+            <label for="edit-monto">Monto:</label>
+            <input id="edit-monto" type="number" v-model.number="editedProject.monto" />
+          </div>
+
+          <div class="modal-form-group">
+            <label>Unidad:</label>
+            <div class="unidad-select-group">
               <select v-model="editedProject.selectedParentUnitId" @change="loadSubUnitsForEdit"
                 class="parent-unit-select">
                 <option value="">Seleccione una unidad padre</option>
@@ -87,75 +143,116 @@
                   {{ sub.nombre }}
                 </option>
               </select>
+              <!-- Opción para la unidad padre si esta puede ser la unidad final -->
+              <div v-if="
+                editedProject.selectedParentUnitId &&
+                currentSubUnits.length === 0
+              ">
+                <input type="radio" :id="'radio-unidad-padre-' + editedProject.selectedParentUnitId"
+                  :value="getUnidadNombre(editedProject.selectedParentUnitId)" v-model="editedProject.unidad" />
+                <label :for="'radio-unidad-padre-' + editedProject.selectedParentUnitId">
+                  {{ getUnidadNombre(editedProject.selectedParentUnitId) }}
+                  (Unidad Final)
+                </label>
+              </div>
             </div>
-          </td>
-          <!-- Convocatoria -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.convocatoria }}</span>
-            <input v-else v-model="editedProject.convocatoria">
-          </td>
-          <!-- Fecha Postulación -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ formatFecha(proyecto.fecha_postulacion) }}</span>
-            <input v-else type="date" v-model="editedProject.fecha_postulacion">
-          </td>
-          <!-- Institución -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ getInstitucionNombre(proyecto.institucion) }}</span>
-            <select v-else v-model="editedProject.institucion">
+          </div>
+
+          <div class="modal-form-group">
+            <label for="edit-convocatoria">Convocatoria:</label>
+            <input id="edit-convocatoria" v-model="editedProject.convocatoria" />
+          </div>
+
+          <div class="modal-form-group">
+            <label for="edit-fecha-postulacion">Fecha Postulación:</label>
+            <input id="edit-fecha-postulacion" type="date" v-model="editedProject.fecha_postulacion" />
+          </div>
+
+          <div class="modal-form-group">
+            <label for="edit-institucion">Institución:</label>
+            <select id="edit-institucion" v-model="editedProject.institucion">
               <option v-for="inst in institucionesOptions" :key="inst.id" :value="inst.id">
                 {{ inst.nombre }}
               </option>
             </select>
-          </td>
-          <!-- Comentario -->
-          <td>
-            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.comentarios }}</span>
-            <textarea v-else v-model="editedProject.comentarios"></textarea>
-          </td>
-          <!-- Acciones -->
-          <td>
-            <div v-if="editingRowId !== proyecto.id_proyecto">
-              <button @click="startEditing(proyecto)" class="boton-editar">Editar</button>
-            </div>
-            <div v-else class="botones-accion">
-              <button @click="saveChanges(proyecto.id_proyecto)" class="boton-guardar">Guardar</button>
-              <button @click="cancelEditing" class="boton-cancelar">Cancelar</button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+          </div>
 
-    <p v-else>Cargando proyectos...</p>
+          <div class="modal-form-group">
+            <label for="edit-comentarios">Comentario:</label>
+            <textarea id="edit-comentarios" v-model="editedProject.comentarios"></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button type="submit" class="boton-guardar">
+              Guardar Cambios
+            </button>
+            <button type="button" @click="cancelEditModal" class="boton-cancelar">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Modal para la selección de Tags -->
+    <div v-if="showTagsModal" class="modal-overlay">
+      <div class="modal-content">
+        <h3>Seleccionar Tags de Apoyo</h3>
+        <div class="tags-checkbox-group">
+          <div v-for="tag in tagsOptions" :key="tag.id_apoyo" class="tag-checkbox-item">
+            <input type="checkbox" :id="'tag-' + tag.id_apoyo" :value="tag.id_apoyo" v-model="tempSelectedTags" />
+            <label :for="'tag-' + tag.id_apoyo">{{ tag.tag }}</label>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button @click="closeTagsModal" class="boton-guardar">Aceptar</button>
+          <button @click="cancelTagsSelection" class="boton-cancelar">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import '../assets/Proyecto_styles/ecxel.css'
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
+import '../assets/Proyecto_styles/ecxel.css'; // Asegúrate de que esta ruta sea correcta
 
 const proyectos = ref([]);
 const academicosPorProyecto = ref([]);
 const unidades = ref([]);
 const unidadesPadre = ref([]);
-const currentSubUnits = ref([]);
+const currentSubUnits = ref([]); // Sub-unidades disponibles para la unidad padre seleccionada
 const estatusOptions = ref([]);
 const institucionesOptions = ref([]);
 const apoyosOptions = ref([]);
+const tematicasOptions = ref([]);
+const tagsOptions = ref([]);
 
-// State for inline editing
-const editingRowId = ref(null);
-const editedProject = ref(null);
+// State for general editing modal
+const showEditModal = ref(false); // Controla la visibilidad del modal de edición principal
+const editedProject = ref(null); // Objeto del proyecto que se está editando
+
+// State for tags modal (nested modal)
+const showTagsModal = ref(false);
+const selectedTags = ref([]); // IDs de los tags seleccionados (para el proyecto)
+const tempSelectedTags = ref([]); // IDs de los tags seleccionados temporalmente en el modal de tags
 
 // API Endpoints
-const url = 'https://elysia-bunbackend-production.up.railway.app/proyectos/data';
-const urlAcademicos = 'https://elysia-bunbackend-production.up.railway.app/proyectos/academicosXProyecto';
+const url = 'https://elysia-bunbackend-production.up.railway.app/funciones/data';
+const urlAcademicos =
+  'https://elysia-bunbackend-production.up.railway.app/funciones/academicosXProyecto';
 const urlUnidades = 'https://elysia-bunbackend-production.up.railway.app/unidades/';
-const urlUpdateProyecto = 'https://elysia-bunbackend-production.up.railway.app/proyectos/update';
+const urlUpdateProyecto =
+  'https://elysia-bunbackend-production.up.railway.app/proyectos/'; // Endpoint para PUT
+const urlDeleteProyecto =
+  'https://elysia-bunbackend-production.up.railway.app/proyectos/'; // Endpoint para DELETE
 const urlEstatus = 'https://elysia-bunbackend-production.up.railway.app/estatus/';
 const urlInstituciones = 'https://elysia-bunbackend-production.up.railway.app/inst-convo/';
 const urlApoyos = 'https://elysia-bunbackend-production.up.railway.app/apoyos/';
+const urltematicas = 'https://elysia-bunbackend-production.up.railway.app/tematicas/';
+const urltags = 'https://elysia-bunbackend-production.up.railway.app/tags/';
 
 // Utility functions
 const formatFecha = (fechaStr) => {
@@ -165,42 +262,64 @@ const formatFecha = (fechaStr) => {
 };
 
 const getAcademicosForProject = (idProyecto) => {
-  const proyecto = academicosPorProyecto.value.find(p => p.id_proyecto === idProyecto);
+  const proyecto = academicosPorProyecto.value.find(
+    (p) => p.id_proyecto === idProyecto,
+  );
   return proyecto ? proyecto.profesores : [];
 };
 
 const getEstatusNombre = (idEstatus) => {
-  const est = estatusOptions.value.find(e => e.id_estatus === idEstatus);
+  const est = estatusOptions.value.find((e) => e.id_estatus === idEstatus);
   return est ? est.tipo : idEstatus;
 };
 
 const getInstitucionNombre = (idInstitucion) => {
-  const inst = institucionesOptions.value.find(i => i.id === idInstitucion);
+  const inst = institucionesOptions.value.find((i) => i.id === idInstitucion);
   return inst ? inst.nombre : idInstitucion;
 };
 
 const getApoyoNombre = (idApoyo) => {
-  const apoyo = apoyosOptions.value.find(a => a.id_apoyo === idApoyo);
-  return apoyo ? apoyo.nombre : idApoyo;
+  const apoyo = apoyosOptions.value.find((a) => a.id_apoyo === idApoyo);
+  return apoyo ? apoyo.nombre : '';
+};
+
+const getTematicaNombre = (idTematica) => {
+  const tematica = tematicasOptions.value.find((t) => t.id_tematica === idTematica);
+  return tematica ? tematica.nombre : idTematica;
+};
+
+const getUnidadNombre = (idUnidad) => {
+  const unidad = unidades.value.find((u) => u.id_unidad === idUnidad);
+  return unidad ? unidad.nombre : idUnidad;
 };
 
 // Fetch data functions
 const fetchOptionsData = async () => {
   try {
-    // Fetch estatus options
-    const [estatusRes, institucionesRes, apoyosRes] = await Promise.all([
-      fetch(urlEstatus),
-      fetch(urlInstituciones),
-      fetch(urlApoyos)
-    ]);
+    const [estatusRes, institucionesRes, apoyosRes, tematicasRes, tagsRes] =
+      await Promise.all([
+        fetch(urlEstatus),
+        fetch(urlInstituciones),
+        fetch(urlApoyos),
+        fetch(urltematicas),
+        fetch(urltags),
+      ]);
 
-    if (!estatusRes.ok || !institucionesRes.ok || !apoyosRes.ok) {
+    if (
+      !estatusRes.ok ||
+      !institucionesRes.ok ||
+      !apoyosRes.ok ||
+      !tematicasRes.ok ||
+      !tagsRes.ok
+    ) {
       throw new Error('Error al obtener opciones');
     }
 
     estatusOptions.value = await estatusRes.json();
     institucionesOptions.value = await institucionesRes.json();
     apoyosOptions.value = await apoyosRes.json();
+    tematicasOptions.value = await tematicasRes.json();
+    tagsOptions.value = await tagsRes.json();
   } catch (error) {
     console.error('Error al cargar opciones:', error);
   }
@@ -211,7 +330,7 @@ const fetchProjectsAndAcademicos = async () => {
     const [proyectosRes, academicosRes, unidadesRes] = await Promise.all([
       fetch(url),
       fetch(urlAcademicos),
-      fetch(urlUnidades)
+      fetch(urlUnidades),
     ]);
 
     if (!proyectosRes.ok || !academicosRes.ok || !unidadesRes.ok) {
@@ -221,107 +340,380 @@ const fetchProjectsAndAcademicos = async () => {
     proyectos.value = await proyectosRes.json();
     academicosPorProyecto.value = await academicosRes.json();
     unidades.value = await unidadesRes.json();
-    unidadesPadre.value = unidades.value.filter(u => !u.parent_id);
+    // Identificar unidades padre (aquellas sin parent_id)
+    unidadesPadre.value = unidades.value.filter((u) => !u.parent_id);
   } catch (error) {
     console.error('Error al cargar datos principales:', error);
   }
 };
 
-// Editing functions
-const startEditing = (proyecto) => {
-  editingRowId.value = proyecto.id_proyecto;
+// Main Edit Modal Functions
+const openEditModal = (proyecto) => {
+  // Clonar profundamente el proyecto para evitar modificar el original directamente
   editedProject.value = JSON.parse(JSON.stringify(proyecto));
 
-  // Format date for input
+  // Formatear la fecha para el input type="date"
   if (editedProject.value.fecha_postulacion) {
     const date = new Date(editedProject.value.fecha_postulacion);
     editedProject.value.fecha_postulacion = date.toISOString().split('T')[0];
   }
 
-  // Set up unidad selection
-  const currentSubUnit = unidades.value.find(u => u.nombre === editedProject.value.unidad);
-  if (currentSubUnit && currentSubUnit.parent_id) {
-    editedProject.value.selectedParentUnitId = currentSubUnit.parent_id;
-    loadSubUnitsForEdit();
+  // Lógica para preseleccionar la unidad y su padre
+  const currentUnit = unidades.value.find(
+    (u) => u.nombre === editedProject.value.unidad,
+  );
+  if (currentUnit) {
+    if (currentUnit.parent_id) {
+      // Si la unidad actual tiene un padre, selecciona el padre y carga las subunidades
+      editedProject.value.selectedParentUnitId = currentUnit.parent_id;
+      currentSubUnits.value = unidades.value.filter(
+        (u) => u.parent_id === currentUnit.parent_id,
+      );
+      // La unidad editada (hija) ya está en editedProject.value.unidad
+    } else {
+      // Si la unidad actual es una unidad padre, selecciona el padre y se convierte en la unidad final
+      editedProject.value.selectedParentUnitId = currentUnit.id_unidad;
+      currentSubUnits.value = []; // No hay subunidades para seleccionar si la padre es la final
+      // La unidad editada (padre) ya está en editedProject.value.unidad
+    }
   } else {
+    // Si la unidad no se encontró o no tiene valor, resetear selecciones
     editedProject.value.selectedParentUnitId = '';
+    editedProject.value.unidad = '';
     currentSubUnits.value = [];
   }
+
+  // Lógica para inicializar tags para el modal anidado
+  const apoyoNombre = getApoyoNombre(editedProject.value.apoyo);
+  if (apoyoNombre === 'PARCIAL') {
+    if (
+      editedProject.value.detalle_apoyo &&
+      typeof editedProject.value.detalle_apoyo === 'string'
+    ) {
+      selectedTags.value = editedProject.value.detalle_apoyo
+        .split(', ')
+        .map((tagText) => {
+          const tag = tagsOptions.value.find((t) => t.tag === tagText);
+          return tag ? tag.id_apoyo : null;
+        })
+        .filter((id) => id !== null);
+    } else {
+      selectedTags.value = [];
+    }
+  } else {
+    selectedTags.value = [];
+  }
+
+  showEditModal.value = true;
 };
 
 const loadSubUnitsForEdit = () => {
   const parentId = editedProject.value.selectedParentUnitId;
   currentSubUnits.value = [];
   if (parentId) {
-    currentSubUnits.value = unidades.value.filter(u => u.parent_id === parentId);
+    currentSubUnits.value = unidades.value.filter(
+      (u) => u.parent_id === parentId,
+    );
+
+    // Si la unidad seleccionada previamente (editedProject.value.unidad)
+    // no es una sub-unidad válida para el nuevo padre seleccionado,
+    // o si el padre seleccionado no tiene sub-unidades,
+    // o si la unidad padre recién seleccionada es la unidad final
+    const selectedParentUnitObject = unidades.value.find(
+      (u) => u.id_unidad === parentId,
+    );
+    if (
+      !currentSubUnits.value.some(
+        (sub) => sub.nombre === editedProject.value.unidad,
+      ) ||
+      currentSubUnits.value.length === 0
+    ) {
+      // Si el padre seleccionado no tiene subunidades, y el usuario quiere que el padre sea la unidad final
+      if (
+        currentSubUnits.value.length === 0 &&
+        editedProject.value.selectedParentUnitId
+      ) {
+        // En este caso, la unidad final debe ser el nombre del padre
+        editedProject.value.unidad = selectedParentUnitObject?.nombre || '';
+      } else {
+        // De lo contrario, limpiar la selección de sub-unidad
+        editedProject.value.unidad = '';
+      }
+    }
+    // Si hay subunidades disponibles, pero editedProject.value.unidad es el padre
+    if (
+      currentSubUnits.value.length > 0 &&
+      editedProject.value.unidad === selectedParentUnitObject?.nombre
+    ) {
+      editedProject.value.unidad = ''; // Limpiar para forzar la selección de sub-unidad
+    }
+  } else {
+    // Si no se selecciona una unidad padre, limpia también la unidad final
+    editedProject.value.unidad = '';
+    currentSubUnits.value = [];
   }
 };
 
-const saveChanges = async (idProyecto) => {
+// Función para actualizar detalle_apoyo basado en los tags seleccionados (para el input readonly)
+const updateDetalleApoyoFromTags = () => {
+  if (selectedTags.value.length > 0) {
+    editedProject.value.detalle_apoyo = selectedTags.value
+      .map((id) => tagsOptions.value.find((tag) => tag.id_apoyo === id)?.tag)
+      .filter((tag) => tag !== undefined)
+      .join(', ');
+  } else if (getApoyoNombre(editedProject.value.apoyo) === 'PARCIAL') {
+    editedProject.value.detalle_apoyo = '';
+  }
+};
+
+// Watcher para el cambio de apoyo dentro del modal de edición principal
+watch(
+  () => editedProject.value?.apoyo,
+  (newApoyoId) => {
+    if (editedProject.value) {
+      const apoyoNombre = getApoyoNombre(newApoyoId);
+      if (apoyoNombre === 'TOTAL') {
+        editedProject.value.detalle_apoyo = 'TOTAL';
+        selectedTags.value = [];
+        tempSelectedTags.value = [];
+      } else if (apoyoNombre === 'PARCIAL') {
+        // Re-evaluar `selectedTags` si el `detalle_apoyo` no está vacío, o inicializarlo vacío
+        if (
+          editedProject.value.detalle_apoyo &&
+          typeof editedProject.value.detalle_apoyo === 'string' &&
+          editedProject.value.detalle_apoyo !== 'TOTAL'
+        ) {
+          selectedTags.value = editedProject.value.detalle_apoyo
+            .split(', ')
+            .map((tagText) => {
+              const tag = tagsOptions.value.find((t) => t.tag === tagText);
+              return tag ? tag.id_apoyo : null;
+            })
+            .filter((id) => id !== null);
+        } else {
+          selectedTags.value = []; // Si cambia a PARCIAL y el detalle_apoyo era 'TOTAL' o vacío, limpiar tags
+        }
+        updateDetalleApoyoFromTags();
+      } else {
+        editedProject.value.detalle_apoyo = '';
+        selectedTags.value = [];
+        tempSelectedTags.value = [];
+      }
+    }
+  },
+  { deep: true },
+); // Usamos deep para ver si editedProject.value cambia
+
+// Watcher para los tags seleccionados (siempre actualiza el string en editedProject.detalle_apoyo)
+watch(
+  selectedTags,
+  () => {
+    if (
+      editedProject.value &&
+      getApoyoNombre(editedProject.value.apoyo) === 'PARCIAL'
+    ) {
+      updateDetalleApoyoFromTags();
+    }
+  },
+  { deep: true },
+);
+
+const saveChanges = async () => {
+  if (!editedProject.value) return;
+
   try {
-    const index = proyectos.value.findIndex(p => p.id_proyecto === idProyecto);
+    const idProyecto = editedProject.value.id_proyecto;
+    const index = proyectos.value.findIndex(
+      (p) => p.id_proyecto === idProyecto,
+    );
     if (index === -1) {
-      console.error('Proyecto no encontrado');
+      console.error('Proyecto no encontrado en la lista local');
+      alert('Error: Proyecto no encontrado para actualizar.');
       return;
     }
 
-    const dataToSend = { ...editedProject.value };
+    // --- Mapeo correcto de campos a IDs ---
+    const requestBody = {
+      nombre: editedProject.value.nombre,
+      monto: editedProject.value.monto,
+      fecha_postulacion: editedProject.value.fecha_postulacion
+        ? new Date(editedProject.value.fecha_postulacion).toISOString()
+        : null,
+      comentarios: editedProject.value.comentarios,
+      // Obtener ID de la unidad por nombre
+      unidad: unidades.value.find(u => u.nombre === editedProject.value.unidad)?.id_unidad || null,
+      // Obtener ID de la temática
+      id_tematica: tematicasOptions.value.find(t => t.nombre === editedProject.value.tematica)?.id_tematica || null,
+      // Obtener ID del estatus
+      id_estatus: estatusOptions.value.find(e => e.tipo === editedProject.value.estatus)?.id_estatus || null,
+      id_kth: null,
+      convocatoria: editedProject.value.convocatoria,
+      tipo_convocatoria: 1,
+      // Obtener ID de la institución
+      inst_conv: institucionesOptions.value.find(i => i.nombre === editedProject.value.institucion)?.id || null,
+      detalle_apoyo: editedProject.value.detalle_apoyo,
+      // Obtener ID del apoyo
+      apoyo: apoyosOptions.value.find(a => a.nombre === editedProject.value.apoyo)?.id_apoyo || null
+    };
 
-    // Find unidad ID if needed
-    const selectedSubUnit = unidades.value.find(u => u.nombre === editedProject.value.unidad);
-    if (selectedSubUnit) {
-      dataToSend.unidad_id = selectedSubUnit.id_unidad;
-    }
+    console.log('JSON a enviar:', JSON.stringify(requestBody, null, 2));
 
-    // Remove temporary fields
-    delete dataToSend.selectedParentUnitId;
-
-    const response = await fetch(`${urlUpdateProyecto}/${idProyecto}`, {
+    const response = await fetch(`${urlUpdateProyecto}${idProyecto}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(dataToSend),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
-      throw new Error('Error al actualizar el proyecto');
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al actualizar el proyecto');
     }
 
-    // Update local data
+    // Actualizar el proyecto en el frontend
     proyectos.value[index] = { ...proyectos.value[index], ...editedProject.value };
 
-    if (proyectos.value[index].fecha_postulacion) {
-      const date = new Date(proyectos.value[index].fecha_postulacion);
-      proyectos.value[index].fecha_postulacion = date.toISOString();
-    }
-
-    // Exit editing mode
-    editingRowId.value = null;
-    editedProject.value = null;
-    currentSubUnits.value = [];
-    console.log('Proyecto actualizado exitosamente');
+    alert('Proyecto actualizado exitosamente!');
+    showEditModal.value = false;
   } catch (error) {
     console.error('Error al guardar cambios:', error);
     alert('Error al guardar cambios: ' + error.message);
   }
 };
 
-const cancelEditing = () => {
-  editingRowId.value = null;
+const cancelEditModal = () => {
+  showEditModal.value = false;
   editedProject.value = null;
+  selectedTags.value = [];
+  tempSelectedTags.value = [];
   currentSubUnits.value = [];
 };
 
-// Initialize data
+// Modal Tags Functions
+const openTagsModal = () => {
+  tempSelectedTags.value = [...selectedTags.value]; // Copiar la selección actual
+  showTagsModal.value = true;
+};
+
+const closeTagsModal = () => {
+  selectedTags.value = [...tempSelectedTags.value]; // Aplicar la selección
+  updateDetalleApoyoFromTags(); // Actualiza el texto del input
+  showTagsModal.value = false;
+};
+
+const cancelTagsSelection = () => {
+  showTagsModal.value = false; // Simplemente cerrar, descartando cambios en tempSelectedTags
+};
+
+// --- Funciones para Eliminar Proyecto ---
+
+const confirmDelete = async (proyecto) => {
+  const isConfirmed = window.confirm(
+    `¿Estás seguro de que quieres eliminar el proyecto "${proyecto.nombre}"? Esta acción no se puede deshacer.`,
+  );
+
+  if (isConfirmed) {
+    const isDoubleConfirmed = window.confirm(
+      `¡ADVERTENCIA! Vas a eliminar "${proyecto.nombre}". ¿Estás ABSOLUTAMENTE seguro?`,
+    );
+    if (isDoubleConfirmed) {
+      await deleteProject(proyecto.id_proyecto);
+    } else {
+      alert('Eliminación cancelada.');
+    }
+  } else {
+    alert('Eliminación cancelada.');
+  }
+};
+
+const deleteProject = async (idProyecto) => {
+  try {
+    console.log(`Intentando eliminar proyecto con ID: ${idProyecto}`);
+    const response = await fetch(`${urlDeleteProyecto}${idProyecto}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Leer el cuerpo de la respuesta una única vez, si existe
+    let responseBody = null;
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        responseBody = await response.json();
+      } catch (jsonParseError) {
+        console.warn('La respuesta se marcó como JSON pero no pudo ser parseada:', jsonParseError);
+        // Si falla el parseo de JSON, a veces puedes intentar como texto, pero cuidado con doble consumo
+        responseBody = await response.text().catch(() => null); // Intenta leer como texto si falla json, con catch adicional
+      }
+    } else {
+      // Si no es JSON, o no tiene Content-Type, intenta leer como texto
+      responseBody = await response.text().catch(() => null);
+    }
+
+    if (!response.ok) {
+      let errorMessage = `Error ${response.status}: ${response.statusText}`;
+      if (responseBody) {
+        // Si el cuerpo es un objeto (JSON parseado), toma el mensaje
+        if (typeof responseBody === 'object' && responseBody !== null && responseBody.message) {
+          errorMessage = responseBody.message;
+        } else if (typeof responseBody === 'string') {
+          // Si es un string (texto plano), úsalo directamente
+          errorMessage = responseBody;
+        } else {
+          // Si es un JSON pero sin 'message', stringify el objeto completo
+          errorMessage = JSON.stringify(responseBody);
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    // Si la respuesta es exitosa (response.ok es true)
+    console.log(`Proyecto con ID ${idProyecto} eliminado exitosamente.`);
+    alert('Proyecto eliminado exitosamente!');
+
+    // Actualizar la lista de proyectos localmente
+    proyectos.value = proyectos.value.filter(
+      (p) => p.id_proyecto !== idProyecto,
+    );
+    academicosPorProyecto.value = academicosPorProyecto.value.filter(
+      (p) => p.id_proyecto !== idProyecto,
+    );
+  } catch (error) {
+    console.error(`Error al eliminar el proyecto ${idProyecto}:`, error);
+    alert('Error al eliminar el proyecto: ' + error.message);
+  }
+};
+
+// Initialize data on component mount
 onMounted(async () => {
-  await Promise.all([
-    fetchOptionsData(),
-    fetchProjectsAndAcademicos()
-  ]);
+  await Promise.all([fetchOptionsData(), fetchProjectsAndAcademicos()]);
 });
 </script>
 
-<style scoped>
-/* Tus estilos existentes */
+<!-- Asumiendo que tus estilos están en `src/assets/Proyecto_styles/ecxel.css` -->
+<!-- No se incluye aquí ya que es un archivo externo -->
+
+<style>
+/* Agrega estos estilos a tu archivo ecxel.css o un bloque <style> si no existe el archivo */
+.boton-eliminar {
+  background-color: #dc3545;
+  /* Rojo */
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 5px;
+  /* Espacio entre editar y eliminar */
+  transition: background-color 0.3s ease;
+}
+
+.boton-eliminar:hover {
+  background-color: #c82333;
+  /* Rojo más oscuro al pasar el mouse */
+}
 </style>

@@ -1,128 +1,11 @@
+/* Estilos generales de la vista */
 .projects-view {
   padding: 20px;
-  font-family: sans-serif;
+  max-width: 100%;
   overflow-x: auto;
-  position: relative;
 }
 
-.proyectos-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  font-size: 0.9em;
-  min-width: 1200px;
-}
-
-.proyectos-table th,
-.proyectos-table td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: left;
-}
-
-.proyectos-table th {
-  background-color: #f4f4f4;
-  position: sticky;
-  top: 0;
-}
-
-.proyectos-table ul {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.proyectos-table li {
-  margin: 2px 0;
-  list-style-type: none;
-  padding-left: 0;
-}
-
-.fila-proyecto {
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.fila-proyecto:hover {
-  background-color: #f0f0f0;
-}
-
-/* Estilos para el modal de edición */
-.modal-edicion {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.contenido-modal {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.campo-formulario {
-  margin-bottom: 15px;
-}
-
-.campo-formulario label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.campo-formulario input,
-.campo-formulario select,
-.campo-formulario textarea {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.campo-formulario textarea {
-  min-height: 100px;
-}
-
-.botones-accion {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.boton-guardar {
-  background-color: #4caf50;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.boton-cancelar {
-  background-color: #f44336;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* Basic styles for the table and inline editing */
-.projects-view {
-  padding: 20px;
-}
-
+/* Estilos de la tabla */
 .proyectos-table {
   width: 100%;
   border-collapse: collapse;
@@ -134,86 +17,241 @@
   border: 1px solid #ddd;
   padding: 8px;
   text-align: left;
+  vertical-align: top;
 }
 
 .proyectos-table th {
   background-color: #f2f2f2;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 .fila-proyecto:hover {
   background-color: #f5f5f5;
-  cursor: pointer;
 }
 
-.fila-editando {
-  background-color: #e6f7ff;
-  /* Light blue for editing row */
-}
-
-/* Input and Select styling for editing mode */
-.proyectos-table input,
-.proyectos-table select,
-.proyectos-table textarea {
+/* Estilos de campos de formulario */
+input,
+select,
+textarea {
   width: 100%;
-  padding: 5px;
+  padding: 8px;
   box-sizing: border-box;
   border: 1px solid #ccc;
   border-radius: 4px;
+  font-size: 0.95rem;
 }
 
-.proyectos-table textarea {
+textarea {
+  min-height: 80px;
   resize: vertical;
-  min-height: 50px;
 }
 
-/* Buttons */
+.readonly-input {
+  background-color: #e9ecef;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Estilos de botones */
 .boton-editar,
 .boton-guardar,
-.boton-cancelar {
-  padding: 8px 12px;
+.boton-cancelar,
+.boton-seleccionar-tags,
+.boton-eliminar {
+  padding: 8px 15px;
+  margin: 3px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  margin-right: 5px;
-  font-size: 0.9em;
+  font-size: 0.9rem;
+  transition: background-color 0.2s ease;
 }
 
 .boton-editar {
+  background-color: #2196f3;
+  color: white;
+}
+
+.boton-editar:hover {
+  background-color: #0b7dda;
+}
+
+.boton-guardar {
+  background-color: #4caf50;
+  color: white;
+}
+
+.boton-guardar:hover {
+  background-color: #45a049;
+}
+
+.boton-cancelar {
+  background-color: #f44336;
+  color: white;
+}
+
+.boton-cancelar:hover {
+  background-color: #da190b;
+}
+
+.boton-seleccionar-tags {
   background-color: #007bff;
   color: white;
 }
 
-.boton-guardar {
-  background-color: #28a745;
-  color: white;
+.boton-seleccionar-tags:hover {
+  background-color: #0056b3;
 }
 
-.boton-cancelar {
+.boton-eliminar {
   background-color: #dc3545;
   color: white;
+  margin-left: 5px;
+}
+
+.boton-eliminar:hover {
+  background-color: #c82333;
 }
 
 .botones-accion {
   display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-  /* Allows buttons to wrap if space is limited */
+  flex-direction: column;
 }
 
-/* Styles for nested unit selects */
+/* Estilos para grupos de elementos */
 .unidad-select-group {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.tags-input-group {
+  display: flex;
   gap: 5px;
+  align-items: center;
 }
 
-.parent-unit-select,
-.sub-unit-select {
-  /* Inherit general input/select styles but can be overridden */
+.tags-input-group input[type="text"] {
+  flex-grow: 1;
+  cursor: pointer;
 }
 
-@media (max-width: 1200px) {
-  .projects-view {
-    overflow-x: scroll;
-  }
+/* Estilos de modales */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content,
+.modal-content-lg {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.modal-content {
+  padding: 25px;
+  max-width: 500px;
+  width: 90%;
+}
+
+.modal-content-lg {
+  padding: 30px;
+  max-width: 800px;
+  width: 95%;
+}
+
+.modal-content h3,
+.modal-content-lg h3 {
+  margin-top: 0;
+  color: #333;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.modal-content-lg h3 {
+  margin-bottom: 25px;
+  text-align: center;
+  border-bottom-width: 2px;
+  padding-bottom: 15px;
+  font-size: 1.8rem;
+}
+
+.modal-form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-form-group label {
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #444;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.modal-content-lg .modal-actions {
+  margin-top: 30px;
+  padding-top: 20px;
+}
+
+/* Estilos para checkboxes de tags */
+.tags-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tag-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.tag-checkbox-item:last-child {
+  border-bottom: none;
+}
+
+.tag-checkbox-item input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  transform: scale(1.2);
+}
+
+.tag-checkbox-item label {
+  flex-grow: 1;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #555;
+}
+
+ul {
+  margin: 0;
+  padding-left: 20px;
 }
