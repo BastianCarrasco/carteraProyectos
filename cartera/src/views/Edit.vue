@@ -12,21 +12,56 @@
           <th>Detalle de Apoyo</th>
           <th>Monto</th>
           <th>Académicos</th>
+          <th>Unidad</th>
           <th>Convocatoria</th>
           <th>Fecha Postulación</th>
           <th>Institución</th>
           <th>Comentario</th>
+          <th>Acciones</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="proyecto in proyectos" :key="proyecto.id_proyecto" @click="editarProyecto(proyecto)"
-          class="fila-proyecto">
-          <td>{{ proyecto.nombre }}</td>
-          <td>{{ proyecto.tematica }}</td>
-          <td>{{ proyecto.estatus }}</td>
-          <td>{{ proyecto.apoyo }}</td>
-          <td>{{ proyecto.detalle_apoyo }}</td>
-          <td>${{ proyecto.monto?.toLocaleString() }}</td>
+        <tr v-for="proyecto in proyectos" :key="proyecto.id_proyecto"
+          :class="{ 'fila-proyecto': true, 'fila-editando': editingRowId === proyecto.id_proyecto }">
+          <!-- Nombre -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.nombre }}</span>
+            <input v-else v-model="editedProject.nombre" required>
+          </td>
+          <!-- Tematica -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.tematica }}</span>
+            <input v-else v-model="editedProject.tematica">
+          </td>
+          <!-- Estatus -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ getEstatusNombre(proyecto.estatus) }}</span>
+            <select v-else v-model="editedProject.estatus">
+              <option v-for="est in estatusOptions" :key="est.id_estatus" :value="est.id_estatus">
+                {{ est.tipo }}
+              </option>
+            </select>
+          </td>
+          <!-- Apoyo -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ getApoyoNombre(proyecto.apoyo) }}</span>
+            <select v-else v-model="editedProject.apoyo">
+              <option v-for="apoyo in apoyosOptions" :key="apoyo.id_apoyo" :value="apoyo.id_apoyo">
+                {{ apoyo.nombre }}
+              </option>
+            </select>
+          </td>
+          <!-- Detalle de Apoyo -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.detalle_apoyo }}</span>
+            <input v-else v-model="editedProject.detalle_apoyo">
+          </td>
+          <!-- Monto -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">${{ proyecto.monto?.toLocaleString() }}</span>
+            <input v-else type="number" v-model.number="editedProject.monto">
+          </td>
+          <!-- Académicos -->
           <td>
             <ul v-if="getAcademicosForProject(proyecto.id_proyecto).length">
               <li v-for="(profesor, index) in getAcademicosForProject(proyecto.id_proyecto)" :key="index">
@@ -35,97 +70,96 @@
             </ul>
             <span v-else>-</span>
           </td>
-          <td>{{ proyecto.convocatoria }}</td>
-          <td>{{ formatFecha(proyecto.fecha_postulacion) }}</td>
-          <td>{{ proyecto.institucion }}</td>
-          <td>{{ proyecto.comentarios }}</td>
+          <!-- Unidad -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.unidad }}</span>
+            <div v-else class="unidad-select-group">
+              <select v-model="editedProject.selectedParentUnitId" @change="loadSubUnitsForEdit"
+                class="parent-unit-select">
+                <option value="">Seleccione una unidad padre</option>
+                <option v-for="unidad in unidadesPadre" :key="unidad.id_unidad" :value="unidad.id_unidad">
+                  {{ unidad.nombre }}
+                </option>
+              </select>
+              <select v-if="currentSubUnits.length > 0" v-model="editedProject.unidad" class="sub-unit-select">
+                <option value="">Seleccione una sub-unidad</option>
+                <option v-for="sub in currentSubUnits" :key="sub.id_unidad" :value="sub.nombre">
+                  {{ sub.nombre }}
+                </option>
+              </select>
+            </div>
+          </td>
+          <!-- Convocatoria -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.convocatoria }}</span>
+            <input v-else v-model="editedProject.convocatoria">
+          </td>
+          <!-- Fecha Postulación -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ formatFecha(proyecto.fecha_postulacion) }}</span>
+            <input v-else type="date" v-model="editedProject.fecha_postulacion">
+          </td>
+          <!-- Institución -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ getInstitucionNombre(proyecto.institucion) }}</span>
+            <select v-else v-model="editedProject.institucion">
+              <option v-for="inst in institucionesOptions" :key="inst.id" :value="inst.id">
+                {{ inst.nombre }}
+              </option>
+            </select>
+          </td>
+          <!-- Comentario -->
+          <td>
+            <span v-if="editingRowId !== proyecto.id_proyecto">{{ proyecto.comentarios }}</span>
+            <textarea v-else v-model="editedProject.comentarios"></textarea>
+          </td>
+          <!-- Acciones -->
+          <td>
+            <div v-if="editingRowId !== proyecto.id_proyecto">
+              <button @click="startEditing(proyecto)" class="boton-editar">Editar</button>
+            </div>
+            <div v-else class="botones-accion">
+              <button @click="saveChanges(proyecto.id_proyecto)" class="boton-guardar">Guardar</button>
+              <button @click="cancelEditing" class="boton-cancelar">Cancelar</button>
+            </div>
+          </td>
         </tr>
       </tbody>
     </table>
 
     <p v-else>Cargando proyectos...</p>
-
-    <!-- Modal de edición -->
-    <div v-if="proyectoEditando" class="modal-edicion">
-      <div class="contenido-modal">
-        <h3>Editar Proyecto</h3>
-
-        <form @submit.prevent="guardarCambios">
-          <div class="campo-formulario">
-            <label>Nombre:</label>
-            <input v-model="proyectoEditando.nombre" required>
-          </div>
-
-          <div class="campo-formulario">
-            <label>Temática:</label>
-            <input v-model="proyectoEditando.tematica">
-          </div>
-
-          <div class="campo-formulario">
-            <label>Estatus:</label>
-            <select v-model="proyectoEditando.estatus">
-              <option value="En progreso">En progreso</option>
-              <option value="Completado">Completado</option>
-              <option value="Cancelado">Cancelado</option>
-              <option value="Postulado">Postulado</option>
-            </select>
-          </div>
-
-          <div class="campo-formulario">
-            <label>Apoyo:</label>
-            <input v-model="proyectoEditando.apoyo">
-          </div>
-
-          <div class="campo-formulario">
-            <label>Detalle de apoyo:</label>
-            <input v-model="proyectoEditando.detalle_apoyo">
-          </div>
-
-          <div class="campo-formulario">
-            <label>Monto:</label>
-            <input type="number" v-model.number="proyectoEditando.monto">
-          </div>
-
-          <div class="campo-formulario">
-            <label>Convocatoria:</label>
-            <input v-model="proyectoEditando.convocatoria">
-          </div>
-
-          <div class="campo-formulario">
-            <label>Fecha Postulación:</label>
-            <input type="date" v-model="proyectoEditando.fecha_postulacion">
-          </div>
-
-          <div class="campo-formulario">
-            <label>Institución:</label>
-            <input v-model="proyectoEditando.institucion">
-          </div>
-
-          <div class="campo-formulario">
-            <label>Comentario:</label>
-            <textarea v-model="proyectoEditando.comentarios"></textarea>
-          </div>
-
-          <div class="botones-accion">
-            <button type="submit" class="boton-guardar">Guardar</button>
-            <button type="button" @click="cancelarEdicion" class="boton-cancelar">Cancelar</button>
-          </div>
-        </form>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
+import '../assets/Proyecto_styles/ecxel.css'
 import { ref, onMounted } from 'vue';
 
 const proyectos = ref([]);
 const academicosPorProyecto = ref([]);
-const proyectoEditando = ref(null);
+const unidades = ref([]);
+const unidadesPadre = ref([]);
+const currentSubUnits = ref([]);
+const estatusOptions = ref([]);
+const institucionesOptions = ref([]);
+const apoyosOptions = ref([]);
+
+// State for inline editing
+const editingRowId = ref(null);
+const editedProject = ref(null);
+
+// API Endpoints
 const url = 'https://elysia-bunbackend-production.up.railway.app/proyectos/data';
 const urlAcademicos = 'https://elysia-bunbackend-production.up.railway.app/proyectos/academicosXProyecto';
+const urlUnidades = 'https://elysia-bunbackend-production.up.railway.app/unidades/';
+const urlUpdateProyecto = 'https://elysia-bunbackend-production.up.railway.app/proyectos/update';
+const urlEstatus = 'https://elysia-bunbackend-production.up.railway.app/estatus/';
+const urlInstituciones = 'https://elysia-bunbackend-production.up.railway.app/inst-convo/';
+const urlApoyos = 'https://elysia-bunbackend-production.up.railway.app/apoyos/';
 
+// Utility functions
 const formatFecha = (fechaStr) => {
+  if (!fechaStr) return '-';
   const fecha = new Date(fechaStr);
   return fecha.toLocaleDateString('es-CL');
 };
@@ -135,189 +169,159 @@ const getAcademicosForProject = (idProyecto) => {
   return proyecto ? proyecto.profesores : [];
 };
 
-const editarProyecto = (proyecto) => {
-  // Hacemos una copia profunda del proyecto para editar
-  proyectoEditando.value = JSON.parse(JSON.stringify(proyecto));
-
-  // Convertir la fecha al formato que espera el input type="date"
-  if (proyectoEditando.value.fecha_postulacion) {
-    const fecha = new Date(proyectoEditando.value.fecha_postulacion);
-    proyectoEditando.value.fecha_postulacion = fecha.toISOString().split('T')[0];
-  }
+const getEstatusNombre = (idEstatus) => {
+  const est = estatusOptions.value.find(e => e.id_estatus === idEstatus);
+  return est ? est.tipo : idEstatus;
 };
 
-const guardarCambios = async () => {
-  try {
-    // Aquí deberías implementar la llamada a tu API para guardar los cambios
-    // Por ahora solo actualizamos localmente
-    const index = proyectos.value.findIndex(p => p.id_proyecto === proyectoEditando.value.id_proyecto);
-    if (index !== -1) {
-      proyectos.value[index] = { ...proyectoEditando.value };
+const getInstitucionNombre = (idInstitucion) => {
+  const inst = institucionesOptions.value.find(i => i.id === idInstitucion);
+  return inst ? inst.nombre : idInstitucion;
+};
 
-      // Convertir la fecha de vuelta al formato original si es necesario
-      if (proyectos.value[index].fecha_postulacion) {
-        const fecha = new Date(proyectos.value[index].fecha_postulacion);
-        proyectos.value[index].fecha_postulacion = fecha.toISOString();
-      }
+const getApoyoNombre = (idApoyo) => {
+  const apoyo = apoyosOptions.value.find(a => a.id_apoyo === idApoyo);
+  return apoyo ? apoyo.nombre : idApoyo;
+};
+
+// Fetch data functions
+const fetchOptionsData = async () => {
+  try {
+    // Fetch estatus options
+    const [estatusRes, institucionesRes, apoyosRes] = await Promise.all([
+      fetch(urlEstatus),
+      fetch(urlInstituciones),
+      fetch(urlApoyos)
+    ]);
+
+    if (!estatusRes.ok || !institucionesRes.ok || !apoyosRes.ok) {
+      throw new Error('Error al obtener opciones');
     }
 
-    proyectoEditando.value = null;
-    console.log('Cambios guardados');
+    estatusOptions.value = await estatusRes.json();
+    institucionesOptions.value = await institucionesRes.json();
+    apoyosOptions.value = await apoyosRes.json();
+  } catch (error) {
+    console.error('Error al cargar opciones:', error);
+  }
+};
+
+const fetchProjectsAndAcademicos = async () => {
+  try {
+    const [proyectosRes, academicosRes, unidadesRes] = await Promise.all([
+      fetch(url),
+      fetch(urlAcademicos),
+      fetch(urlUnidades)
+    ]);
+
+    if (!proyectosRes.ok || !academicosRes.ok || !unidadesRes.ok) {
+      throw new Error('Error al obtener datos principales');
+    }
+
+    proyectos.value = await proyectosRes.json();
+    academicosPorProyecto.value = await academicosRes.json();
+    unidades.value = await unidadesRes.json();
+    unidadesPadre.value = unidades.value.filter(u => !u.parent_id);
+  } catch (error) {
+    console.error('Error al cargar datos principales:', error);
+  }
+};
+
+// Editing functions
+const startEditing = (proyecto) => {
+  editingRowId.value = proyecto.id_proyecto;
+  editedProject.value = JSON.parse(JSON.stringify(proyecto));
+
+  // Format date for input
+  if (editedProject.value.fecha_postulacion) {
+    const date = new Date(editedProject.value.fecha_postulacion);
+    editedProject.value.fecha_postulacion = date.toISOString().split('T')[0];
+  }
+
+  // Set up unidad selection
+  const currentSubUnit = unidades.value.find(u => u.nombre === editedProject.value.unidad);
+  if (currentSubUnit && currentSubUnit.parent_id) {
+    editedProject.value.selectedParentUnitId = currentSubUnit.parent_id;
+    loadSubUnitsForEdit();
+  } else {
+    editedProject.value.selectedParentUnitId = '';
+    currentSubUnits.value = [];
+  }
+};
+
+const loadSubUnitsForEdit = () => {
+  const parentId = editedProject.value.selectedParentUnitId;
+  currentSubUnits.value = [];
+  if (parentId) {
+    currentSubUnits.value = unidades.value.filter(u => u.parent_id === parentId);
+  }
+};
+
+const saveChanges = async (idProyecto) => {
+  try {
+    const index = proyectos.value.findIndex(p => p.id_proyecto === idProyecto);
+    if (index === -1) {
+      console.error('Proyecto no encontrado');
+      return;
+    }
+
+    const dataToSend = { ...editedProject.value };
+
+    // Find unidad ID if needed
+    const selectedSubUnit = unidades.value.find(u => u.nombre === editedProject.value.unidad);
+    if (selectedSubUnit) {
+      dataToSend.unidad_id = selectedSubUnit.id_unidad;
+    }
+
+    // Remove temporary fields
+    delete dataToSend.selectedParentUnitId;
+
+    const response = await fetch(`${urlUpdateProyecto}/${idProyecto}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(dataToSend),
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al actualizar el proyecto');
+    }
+
+    // Update local data
+    proyectos.value[index] = { ...proyectos.value[index], ...editedProject.value };
+
+    if (proyectos.value[index].fecha_postulacion) {
+      const date = new Date(proyectos.value[index].fecha_postulacion);
+      proyectos.value[index].fecha_postulacion = date.toISOString();
+    }
+
+    // Exit editing mode
+    editingRowId.value = null;
+    editedProject.value = null;
+    currentSubUnits.value = [];
+    console.log('Proyecto actualizado exitosamente');
   } catch (error) {
     console.error('Error al guardar cambios:', error);
+    alert('Error al guardar cambios: ' + error.message);
   }
 };
 
-const cancelarEdicion = () => {
-  proyectoEditando.value = null;
+const cancelEditing = () => {
+  editingRowId.value = null;
+  editedProject.value = null;
+  currentSubUnits.value = [];
 };
 
+// Initialize data
 onMounted(async () => {
-  try {
-    // Load projects
-    const responseProyectos = await fetch(url);
-    if (!responseProyectos.ok) throw new Error('Error al obtener proyectos');
-    proyectos.value = await responseProyectos.json();
-
-    // Load academics by project
-    const responseAcademicos = await fetch(urlAcademicos);
-    if (!responseAcademicos.ok) throw new Error('Error al obtener académicos');
-    academicosPorProyecto.value = await responseAcademicos.json();
-
-    console.log('✅ Datos cargados:', {
-      proyectos: proyectos.value,
-      academicos: academicosPorProyecto.value
-    });
-  } catch (error) {
-    console.error('❌ Error al consultar la API:', error.message);
-  }
+  await Promise.all([
+    fetchOptionsData(),
+    fetchProjectsAndAcademicos()
+  ]);
 });
 </script>
 
 <style scoped>
-.projects-view {
-  padding: 20px;
-  font-family: sans-serif;
-  overflow-x: auto;
-  position: relative;
-}
-
-.proyectos-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-  font-size: 0.9em;
-  min-width: 1200px;
-}
-
-.proyectos-table th,
-.proyectos-table td {
-  border: 1px solid #ccc;
-  padding: 8px;
-  text-align: left;
-}
-
-.proyectos-table th {
-  background-color: #f4f4f4;
-  position: sticky;
-  top: 0;
-}
-
-.proyectos-table ul {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.proyectos-table li {
-  margin: 2px 0;
-  list-style-type: none;
-  padding-left: 0;
-}
-
-.fila-proyecto {
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.fila-proyecto:hover {
-  background-color: #f0f0f0;
-}
-
-/* Estilos para el modal de edición */
-.modal-edicion {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.contenido-modal {
-  background-color: white;
-  padding: 20px;
-  border-radius: 8px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.campo-formulario {
-  margin-bottom: 15px;
-}
-
-.campo-formulario label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-
-.campo-formulario input,
-.campo-formulario select,
-.campo-formulario textarea {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-.campo-formulario textarea {
-  min-height: 100px;
-}
-
-.botones-accion {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.boton-guardar {
-  background-color: #4CAF50;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.boton-cancelar {
-  background-color: #f44336;
-  color: white;
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-@media (max-width: 1200px) {
-  .projects-view {
-    overflow-x: scroll;
-  }
-}
+/* Tus estilos existentes */
 </style>
