@@ -1,14 +1,17 @@
 <template>
   <div class="projects-view">
+    <!-- El componente Lista recibirá los proyectos enriquecidos con la información de académicos -->
     <Lista :proyectos="proyectos" :loading="loading" :error="error" />
   </div>
 </template>
 
 <script>
 import { ref, onMounted } from 'vue';
-import Lista from '../components/proyectos/lista.vue';
+import Lista from '../components/proyectos/lista.vue'; // Asumiendo que 'lista.vue' es el componente Lista
 
 const proyectosUrl = 'https://elysia-bunbackend-production.up.railway.app/funciones/data';
+const urlAcademicos =
+  'https://elysia-bunbackend-production.up.railway.app/funciones/academicosXProyecto';
 
 export default {
   name: 'ProjectsView',
@@ -22,24 +25,45 @@ export default {
 
     onMounted(async () => {
       try {
-        const response = await fetch(proyectosUrl);
-        const data = await response.json();
+        // 1. Obtener los proyectos
+        const proyectosResponse = await fetch(proyectosUrl);
+        let proyectosData = await proyectosResponse.json();
 
-        // Manejo de respuesta directa (sin propiedad 'success')
-        if (Array.isArray(data)) {
-          proyectos.value = data;
+        // Normalizar la data de proyectos (manejar { success, data } o array directo)
+        if (proyectosData.success && Array.isArray(proyectosData.data)) {
+          proyectosData = proyectosData.data;
+        } else if (!Array.isArray(proyectosData)) {
+          throw new Error('Formato de respuesta de proyectos no reconocido');
         }
-        // Manejo de respuesta con estructura {success, data}
-        else if (data.success && Array.isArray(data.data)) {
-          proyectos.value = data.data;
+
+        // 2. Obtener los académicos por proyecto
+        const academicosResponse = await fetch(urlAcademicos);
+        const academicosData = await academicosResponse.json();
+
+        // Asegurarse de que academicosData sea un array
+        if (!Array.isArray(academicosData)) {
+          throw new Error('Formato de respuesta de académicos no reconocido');
         }
-        // Respuesta inesperada
-        else {
-          throw new Error('Formato de respuesta no reconocido');
-        }
+
+        // 3. Fusionar la información de académicos en los proyectos
+        const proyectosConAcademicos = proyectosData.map(proyecto => {
+          // Buscar la entrada de académicos para el proyecto actual por id_proyecto
+          const academicosDelProyecto = academicosData.find(
+            academicoEntry => academicoEntry.id_proyecto === proyecto.id_proyecto
+          );
+
+          // Si se encuentran académicos, agregarlos al objeto proyecto
+          return {
+            ...proyecto,
+            profesores: academicosDelProyecto ? academicosDelProyecto.profesores : []
+          };
+        });
+
+        proyectos.value = proyectosConAcademicos;
+
       } catch (err) {
-        error.value = `Error al cargar proyectos: ${err.message}`;
-        console.error('Error fetching projects:', err);
+        error.value = `Error al cargar datos: ${err.message}`;
+        console.error('Error fetching data:', err);
       } finally {
         loading.value = false;
       }

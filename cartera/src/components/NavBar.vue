@@ -11,9 +11,9 @@
       <router-link to="/create" class="nav-link">
         <font-awesome-icon :icon="faPlusCircle" /> Cartera de Proyectos
       </router-link>
-      <router-link to="/edit" class="nav-link">
+      <!-- <router-link to="/edit" class="nav-link">
         <font-awesome-icon :icon="faDatabase" /> Editar BD
-      </router-link>
+      </router-link> -->
 
       <!-- Menú desplegable -->
       <div class="dropdown">

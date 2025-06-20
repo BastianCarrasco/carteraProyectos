@@ -218,18 +218,21 @@
 
               <v-col cols="12" sm="6" md="6">
                 <v-select v-model="editedProject.apoyo" :items="apoyosLookup" item-title="nombre" item-value="id_apoyo"
-                  label="Apoyo" :rules="[rules.optionalSelect, rules.requiredIfParcial]" clearable
+                  label="Apoyo" :rules="[rules.optionalSelect]" clearable
                   @update:model-value="handleApoyoChange"></v-select>
               </v-col>
 
               <v-col cols="12">
+                <!-- Conditional rendering based on apoyo type -->
                 <v-text-field v-if="isApoyoTotal" v-model="editedProject.detalle_apoyo" label="Detalle Apoyo" readonly
                   :rules="[rules.required]"></v-text-field>
+
                 <v-select v-else-if="isApoyoParcial" v-model="selectedTags" :items="tagsLookup" item-title="tag"
                   item-value="tag" label="Detalle Apoyo (Seleccione tags)" multiple chips clearable
-                  :rules="[rules.requiredIfParcial]"></v-select>
+                  :rules="[rules.requiredIfParcialSelect]" @update:model-value="updateDetalleApoyoFromTags"></v-select>
+
                 <v-text-field v-else v-model="editedProject.detalle_apoyo" label="Detalle Apoyo"
-                  placeholder="Ingrese detalle de apoyo" clearable></v-text-field>
+                  placeholder="Ingrese detalle de apoyo" clearable :rules="[rules.optionalText]"></v-text-field>
               </v-col>
 
               <!-- KTH ID - As it was commented out, I'm assuming it's a simple text input if it were to be added -->
@@ -346,18 +349,18 @@ const valid = ref(true);
 const form = ref(null);
 
 const rules = {
-  required: (value) => !!value || 'Campo requerido.', // Keep this for "TOTAL" apoyo, if needed
-  optionalText: (value) => true, // Always true, field is optional
+  required: (value) => !!value || 'Campo requerido.',
+  optionalText: (value) => true,
   optionalNumber: (value) => {
-    // Check if value is provided, then validate if it's a number
     if (value === null || value === undefined || value === '') return true;
     return (
       (!isNaN(parseFloat(value)) && isFinite(value)) ||
       'Debe ser un número válido.'
     );
   },
-  optionalSelect: (value) => true, // Always true, select is optional
-  requiredIfParcial: (value) => {
+  optionalSelect: (value) => true,
+  // New rule for v-select when Apoyo is PARCIAL
+  requiredIfParcialSelect: (value) => {
     const partialApoyo = apoyosLookup.value.find(
       (a) => a.nombre === 'PARCIAL',
     );
@@ -458,8 +461,6 @@ const filteredProyectos = computed(() => {
     if (startDate && endDate) {
       filtered = filtered.filter((proyecto) => {
         const projectDate = new Date(proyecto.fecha_postulacion);
-        // Important: projectDate needs to be compared against startDate/endDate in local time
-        // Or ensure all dates are converted to UTC for comparison if necessary for backend consistency
         return projectDate >= startDate && projectDate <= endDate;
       });
     }
@@ -481,7 +482,7 @@ const itemsPerPageOptions = [
 const pageCount = computed(() => {
   if (itemsPerPage.value === 0) return 1;
   if (itemsPerPage.value === -1)
-    return Math.ceil(filteredProyectos.value.length / 10); // Still calculate based on filtered items
+    return Math.ceil(filteredProyectos.value.length / 10);
   return Math.ceil(filteredProyectos.value.length / itemsPerPage.value);
 });
 
@@ -581,7 +582,6 @@ const formatDateDisplay = (dateString) => {
   if (!dateString) return '-';
   try {
     const date = new Date(dateString);
-    // Adjust for UTC if dates are stored without timezone info to prevent day-off issues
     const userTimezoneOffset = date.getTimezoneOffset() * 60000;
     const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
 
@@ -675,6 +675,7 @@ const editProject = (event, { item }) => {
     editedProject.value.fecha_postulacion,
   );
 
+  // Initialize selectedTags based on existing detalle_apoyo if Apoyo is PARCIAL
   if (
     getApoyoName(editedProject.value.apoyo) === 'PARCIAL' &&
     editedProject.value.detalle_apoyo
@@ -697,7 +698,7 @@ const editProject = (event, { item }) => {
 const closeDialog = () => {
   dialog.value = false;
   editedProject.value = { ...defaultProject };
-  selectedTags.value = [];
+  selectedTags.value = []; // Clear selected tags on close
 };
 
 const handleApoyoChange = (newApoyoId) => {
@@ -705,16 +706,31 @@ const handleApoyoChange = (newApoyoId) => {
     (a) => a.id_apoyo === newApoyoId,
   )?.nombre;
 
+  // Reset relevant fields when apoyo type changes
   if (newApoyoName === 'TOTAL') {
     editedProject.value.detalle_apoyo = 'TOTAL';
-    selectedTags.value = [];
+    selectedTags.value = []; // Clear tags if not partial
   } else if (newApoyoName === 'PARCIAL') {
-    editedProject.value.detalle_apoyo = null;
-    selectedTags.value = [];
+    editedProject.value.detalle_apoyo = selectedTags.value.join(', '); // Initialize based on current tags
   } else {
-    editedProject.value.detalle_apoyo = null;
+    editedProject.value.detalle_apoyo = null; // Clear if 'Otro' or none
     selectedTags.value = [];
   }
+
+  // Validate the form after the change to reflect new rules
+  nextTick(() => {
+    if (form.value) {
+      form.value.validate();
+    }
+  });
+};
+
+// New function to update detalle_apoyo whenever selectedTags changes
+const updateDetalleApoyoFromTags = (newTags) => {
+  if (isApoyoParcial.value) {
+    editedProject.value.detalle_apoyo = newTags.join(', ');
+  }
+  // Re-validate the form field specifically if needed
   nextTick(() => {
     if (form.value) {
       form.value.validate();
@@ -723,6 +739,11 @@ const handleApoyoChange = (newApoyoId) => {
 };
 
 const saveProject = async () => {
+  // Ensure detalle_apoyo is consistent with selectedTags before validation
+  if (isApoyoParcial.value) {
+    editedProject.value.detalle_apoyo = selectedTags.value.join(', ');
+  }
+
   const { valid: formValid } = await form.value.validate();
 
   if (!formValid) {
@@ -736,6 +757,7 @@ const saveProject = async () => {
   try {
     const projectToSave = { ...editedProject.value };
 
+    // Final check for detalle_apoyo before sending
     if (isApoyoParcial.value) {
       projectToSave.detalle_apoyo = selectedTags.value.join(', ');
     } else if (isApoyoTotal.value) {
@@ -763,7 +785,6 @@ const saveProject = async () => {
         if (projectToSave[key] !== null && projectToSave[key] !== undefined) {
           projectToSave[key] = Number(projectToSave[key]);
         } else if (projectToSave[key] === '') {
-          // Ensure empty string is converted to null for number fields
           projectToSave[key] = null;
         }
       }
@@ -774,7 +795,7 @@ const saveProject = async () => {
         projectToSave.fecha_postulacion,
       ).toISOString();
     } else {
-      projectToSave.fecha_postulacion = null; // Ensure null if not provided
+      projectToSave.fecha_postulacion = null;
     }
 
     const response = await fetch(
@@ -808,14 +829,12 @@ const saveProject = async () => {
 };
 
 // New Delete Project Functions
-// This function is now called from within the edit modal
 const confirmDeleteFromEditModal = () => {
-  // Use the currently edited project as the one to delete
   projectToDelete.value = { ...editedProject.value };
   projectToDeleteName.value = editedProject.value.nombre;
 
-  dialog.value = false; // Close the edit modal first
-  deleteConfirmDialog.value = true; // Open the delete confirmation dialog
+  dialog.value = false;
+  deleteConfirmDialog.value = true;
 };
 
 const cancelDelete = () => {
@@ -831,7 +850,7 @@ const executeDelete = async () => {
     return;
   }
 
-  deleteConfirmDialog.value = false; // Close dialog immediately
+  deleteConfirmDialog.value = false;
   loading.value = true;
   error.value = null;
 
@@ -852,7 +871,7 @@ const executeDelete = async () => {
     }
 
     console.log('Project deleted successfully.');
-    await fetchData(); // Refresh data after deletion
+    await fetchData();
   } catch (err) {
     error.value = err;
     console.error('Error deleting project:', err);
