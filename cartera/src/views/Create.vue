@@ -2,6 +2,16 @@
   <v-container fluid class="pa-4">
     <h1 class="my-4 text-h4">Listado de Proyectos</h1>
 
+    <!-- Create Project Button -->
+    <v-row class="mb-4">
+      <v-col cols="12" class="text-right">
+        <v-btn color="primary" @click="openCreateProjectModal">
+          <v-icon left>mdi-plus</v-icon>
+          Crear Proyecto
+        </v-btn>
+      </v-col>
+    </v-row>
+
     <!-- Loading state -->
     <v-row v-if="loading" justify="center" class="mt-5">
       <v-col cols="12" class="text-center">
@@ -19,11 +29,49 @@
       </v-col>
     </v-row>
 
+    <!-- Filter Section -->
+    <v-row class="mb-4 align-end">
+      <v-col cols="12" sm="6" md="4" lg="3">
+        <v-text-field v-model="searchQuery" label="Buscar por Nombre de Proyecto" clearable
+          prepend-inner-icon="mdi-magnify" variant="outlined" density="compact" hide-details></v-text-field>
+      </v-col>
+      <v-col cols="12" sm="6" md="4" lg="2">
+        <v-select v-model="filterUnidad" :items="unidadesLookup" item-title="nombre" item-value="id_unidad"
+          label="Filtrar por Unidad" clearable variant="outlined" density="compact" hide-details></v-select>
+      </v-col>
+      <v-col cols="12" sm="6" md="4" lg="2">
+        <v-select v-model="filterTematica" :items="tematicasLookup" item-title="nombre" item-value="id_tematica"
+          label="Filtrar por Temática" clearable variant="outlined" density="compact" hide-details></v-select>
+      </v-col>
+      <v-col cols="12" sm="6" md="4" lg="2">
+        <v-select v-model="filterEstatus" :items="estatusLookup" item-title="tipo" item-value="id_estatus"
+          label="Filtrar por Estatus" clearable variant="outlined" density="compact" hide-details></v-select>
+      </v-col>
+      <v-col cols="12" sm="12" md="6" lg="3">
+        <v-menu v-model="dateMenu" :close-on-content-click="false" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-text-field v-model="dateRangeText" label="Filtrar por Fecha de Postulación"
+              prepend-inner-icon="mdi-calendar" readonly v-bind="props" clearable variant="outlined" density="compact"
+              hide-details @click:clear="clearDateFilter"></v-text-field>
+          </template>
+          <v-date-picker v-model="filterDateRange" range color="primary" show-adjacent-months
+            @update:model-value="onDateRangeChange"></v-date-picker>
+        </v-menu>
+      </v-col>
+      <v-col cols="12" class="text-right mt-n4">
+        <!-- New Reset Filters Button -->
+        <v-btn color="secondary" @click="resetFilters">
+          <v-icon left>mdi-filter-off</v-icon>
+          Restablecer Filtros
+        </v-btn>
+      </v-col>
+    </v-row>
+
     <!-- Data Table Wrapper for Horizontal Scrolling -->
     <div class="data-table-wrapper">
-      <v-data-table v-if="!loading && !error" :headers="headers" :items="proyectosCrudo" item-value="id_proyecto"
-        class="excel-table" no-data-text="No hay proyectos disponibles." items-per-page="10" fixed-header
-        @click:row="editProject">
+      <v-data-table v-if="!loading && !error" :headers="headers" :items="paginatedProyectos" item-value="id_proyecto"
+        class="excel-table" no-data-text="No hay proyectos disponibles." fixed-header @click:row="editProject"
+        :items-per-page="itemsPerPage">
         <!-- Custom template for 'monto' to format as currency -->
         <template v-slot:item.monto="{ item }">
           {{ formatCurrency(item.monto / 100000) }}
@@ -31,7 +79,7 @@
 
         <!-- Custom template for 'fecha_postulacion' to format as a readable date -->
         <template v-slot:item.fecha_postulacion="{ item }">
-          {{ formatDateDisplay(item.fecha_postulacion) }} <!-- Use formatDateDisplay here -->
+          {{ formatDateDisplay(item.fecha_postulacion) }}
         </template>
 
         <!-- Custom template for 'comentarios' to limit length and show tooltip -->
@@ -93,18 +141,30 @@
         <!-- Custom footer for pagination controls -->
         <template v-slot:bottom>
           <div class="pa-2 d-flex justify-space-between align-center text-caption text-grey">
-            <span>Proyectos mostrados: {{ proyectosCrudo.length }}</span>
+            <span>Proyectos mostrados: {{ paginatedProyectos.length }} de {{ filteredProyectos.length }}</span>
             <v-pagination v-model="page" :length="pageCount" :total-visible="7" density="compact"></v-pagination>
+            <!-- Add a items-per-page dropdown for convenience -->
+            <v-select v-model="itemsPerPage" :items="itemsPerPageOptions" label="Proyectos por página"
+              variant="outlined" density="compact" hide-details style="max-width: 150px;"></v-select>
           </div>
         </template>
       </v-data-table>
     </div>
 
-    <!-- Edit Project Dialog -->
+    <!-- Edit Project Dialog (Existing) -->
     <v-dialog v-model="dialog" max-width="800px" persistent>
       <v-card>
-        <v-card-title class="headline grey lighten-2">
-          <span class="text-h6">Editar Proyecto: {{ editedProject.nombre }}</span>
+        <v-card-title class="headline grey lighten-2 d-flex align-center">
+          <!-- Truncate and add tooltip for project name in dialog title -->
+          <v-tooltip :text="editedProject.nombre" location="bottom" open-delay="300"
+            :disabled="!editedProject.nombre || editedProject.nombre.length < 50">
+            <template v-slot:activator="{ props }">
+              <span v-bind="props" class="text-h6 d-inline-block text-truncate" style="max-width: 650px;">
+                Editar Proyecto: {{ editedProject.nombre }}
+              </span>
+            </template>
+          </v-tooltip>
+
           <v-spacer></v-spacer>
           <v-btn icon @click="closeDialog">
             <v-icon>mdi-close</v-icon>
@@ -116,16 +176,15 @@
             <v-row>
               <v-col cols="12" sm="6" md="6">
                 <v-text-field v-model="editedProject.nombre" label="Nombre del Proyecto"
-                  :rules="[rules.required]"></v-text-field>
+                  :rules="[rules.optionalText]"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
                 <v-text-field v-model.number="editedProject.monto" label="Monto" type="number"
-                  :rules="[rules.required, rules.number]" prefix="$"></v-text-field>
+                  :rules="[rules.optionalNumber]" prefix="$"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
-                <!-- Date Picker -->
                 <v-text-field v-model="editedProject.fecha_postulacion" label="Fecha de Postulación" type="date"
-                  :rules="[rules.required]" hint="Formato AAAA-MM-DD" persistent-hint></v-text-field>
+                  :rules="[rules.optionalText]" hint="Formato AAAA-MM-DD" persistent-hint></v-text-field>
               </v-col>
               <v-col cols="12" sm="6" md="6">
                 <v-textarea v-model="editedProject.comentarios" label="Comentarios" rows="3"></v-textarea>
@@ -133,15 +192,15 @@
 
               <v-col cols="12" sm="6" md="4">
                 <v-select v-model="editedProject.unidad" :items="unidadesLookup" item-title="nombre"
-                  item-value="id_unidad" label="Unidad" :rules="[rules.required]" clearable></v-select>
+                  item-value="id_unidad" label="Unidad" :rules="[rules.optionalSelect]" clearable></v-select>
               </v-col>
               <v-col cols="12" sm="6" md="4">
                 <v-select v-model="editedProject.id_tematica" :items="tematicasLookup" item-title="nombre"
-                  item-value="id_tematica" label="Temática" :rules="[rules.required]" clearable></v-select>
+                  item-value="id_tematica" label="Temática" :rules="[rules.optionalSelect]" clearable></v-select>
               </v-col>
               <v-col cols="12" sm="6" md="4">
                 <v-select v-model="editedProject.id_estatus" :items="estatusLookup" item-title="tipo"
-                  item-value="id_estatus" label="Estatus" :rules="[rules.required]" clearable></v-select>
+                  item-value="id_estatus" label="Estatus" :rules="[rules.optionalSelect]" clearable></v-select>
               </v-col>
 
               <v-col cols="12" sm="6" md="6">
@@ -159,7 +218,8 @@
 
               <v-col cols="12" sm="6" md="6">
                 <v-select v-model="editedProject.apoyo" :items="apoyosLookup" item-title="nombre" item-value="id_apoyo"
-                  label="Apoyo" :rules="[rules.required]" clearable @update:model-value="handleApoyoChange"></v-select>
+                  label="Apoyo" :rules="[rules.optionalSelect, rules.requiredIfParcial]" clearable
+                  @update:model-value="handleApoyoChange"></v-select>
               </v-col>
 
               <v-col cols="12">
@@ -181,18 +241,43 @@
         </v-card-text>
 
         <v-card-actions class="justify-end pa-4">
+          <!-- New: Delete Button in Edit Modal -->
+          <v-btn color="red-darken-2" variant="tonal" @click="confirmDeleteFromEditModal">Eliminar</v-btn>
+          <v-spacer></v-spacer>
           <v-btn color="primary" variant="flat" @click="saveProject">Guardar</v-btn>
           <v-btn color="grey-darken-1" variant="tonal" @click="closeDialog">Cancelar</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- Delete Confirmation Dialog (unchanged) -->
+    <v-dialog v-model="deleteConfirmDialog" max-width="500px">
+      <v-card>
+        <v-card-title class="headline">Confirmar Eliminación</v-card-title>
+        <v-card-text>
+          ¿Está seguro de que desea eliminar el proyecto
+          <strong class="text-error">{{ projectToDeleteName }}</strong>?
+          Esta acción no se puede deshacer.
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn color="grey-darken-1" variant="tonal" @click="cancelDelete">Cancelar</v-btn>
+          <v-btn color="red-darken-2" variant="flat" @click="executeDelete">Eliminar</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Create Project Modal (New) -->
+    <CreateProjectModal ref="createProjectModalRef" @project-created="handleProjectCreated"
+      @close-modal="closeCreateProjectModal" />
   </v-container>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue';
+import { ref, onMounted, computed, nextTick, watch } from 'vue';
+import CreateProjectModal from '@/components/CreateProjectModal.vue';
+import '../assets/Proyecto_styles/exel2.css';
 
-// URLs (removed duplicate URL block)
+// URLs
 const url =
   'https://elysia-bunbackend-production.up.railway.app/proyectos/crudo';
 const urlAcademicos =
@@ -202,7 +287,7 @@ const urlUnidades =
 const urlUpdateProyecto =
   'https://elysia-bunbackend-production.up.railway.app/proyectos/';
 const urlDeleteProyecto =
-  'https://elysia-bunbackend-production.up.railway.app/proyectos/'; // Not used yet but kept
+  'https://elysia-bunbackend-production.up.railway.app/proyectos/';
 const urlEstatus =
   'https://elysia-bunbackend-production.up.railway.app/estatus/';
 const urlInstituciones =
@@ -230,9 +315,9 @@ const tagsLookup = ref([]);
 const loading = ref(true);
 const error = ref(null);
 
-// Dialog state
-const dialog = ref(false);
-const editedProject = ref({});
+// Dialog state for EDIT Project
+const dialog = ref(false); // Controls the Edit Project Modal
+const editedProject = ref({}); // Stores the project being edited
 const defaultProject = {
   id_proyecto: null,
   nombre: '',
@@ -251,15 +336,27 @@ const defaultProject = {
 };
 const selectedTags = ref([]);
 
-// Form Validation
+// Delete Confirmation State
+const deleteConfirmDialog = ref(false); // Controls the Delete Confirmation Dialog
+const projectToDelete = ref(null); // Stores the project to be deleted
+const projectToDeleteName = ref(''); // Stores the name of the project to be deleted for display
+
+// Form Validation for EDIT Project
 const valid = ref(true);
 const form = ref(null);
 
 const rules = {
-  required: (value) => !!value || 'Campo requerido.',
-  number: (value) =>
-    (!isNaN(parseFloat(value)) && isFinite(value)) ||
-    'Debe ser un número válido.',
+  required: (value) => !!value || 'Campo requerido.', // Keep this for "TOTAL" apoyo, if needed
+  optionalText: (value) => true, // Always true, field is optional
+  optionalNumber: (value) => {
+    // Check if value is provided, then validate if it's a number
+    if (value === null || value === undefined || value === '') return true;
+    return (
+      (!isNaN(parseFloat(value)) && isFinite(value)) ||
+      'Debe ser un número válido.'
+    );
+  },
+  optionalSelect: (value) => true, // Always true, select is optional
   requiredIfParcial: (value) => {
     const partialApoyo = apoyosLookup.value.find(
       (a) => a.nombre === 'PARCIAL',
@@ -277,29 +374,143 @@ const rules = {
   },
 };
 
+// --- New Filter State ---
+const searchQuery = ref('');
+const filterUnidad = ref(null);
+const filterTematica = ref(null);
+const filterEstatus = ref(null);
+const filterDateRange = ref([]); // For v-date-picker, holds [startDate, endDate]
+const dateMenu = ref(false); // To control the date picker menu visibility
+
+// Computed property for displaying date range
+const dateRangeText = computed(() => {
+  if (!filterDateRange.value || filterDateRange.value.length === 0) return '';
+  if (filterDateRange.value.length === 1) {
+    return formatDateDisplay(filterDateRange.value[0]);
+  }
+  const [start, end] = filterDateRange.value;
+  return `${formatDateDisplay(start)} - ${formatDateDisplay(end)}`;
+});
+
+// Watch for filter changes to reset page to 1
+watch(
+  [searchQuery, filterUnidad, filterTematica, filterEstatus, filterDateRange],
+  () => {
+    page.value = 1;
+  },
+);
+
+// --- New Filtered Projects Computed Property ---
+const filteredProyectos = computed(() => {
+  let filtered = proyectosCrudo.value;
+
+  // Filter by search query (project name)
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    filtered = filtered.filter((proyecto) =>
+      proyecto.nombre.toLowerCase().includes(query),
+    );
+  }
+
+  // Filter by unidad
+  if (filterUnidad.value !== null) {
+    filtered = filtered.filter(
+      (proyecto) => proyecto.unidad === filterUnidad.value,
+    );
+  }
+
+  // Filter by tematica
+  if (filterTematica.value !== null) {
+    filtered = filtered.filter(
+      (proyecto) => proyecto.id_tematica === filterTematica.value,
+    );
+  }
+
+  // Filter by estatus
+  if (filterEstatus.value !== null) {
+    filtered = filtered.filter(
+      (proyecto) => proyecto.id_estatus === filterEstatus.value,
+    );
+  }
+
+  // Filter by date range
+  if (filterDateRange.value && filterDateRange.value.length > 0) {
+    let startDate = null;
+    let endDate = null;
+
+    if (filterDateRange.value.length === 1) {
+      // If only one date selected, filter for that specific day
+      startDate = new Date(filterDateRange.value[0]);
+      startDate.setHours(0, 0, 0, 0); // Start of the day
+      endDate = new Date(startDate);
+      endDate.setHours(23, 59, 59, 999); // End of the day
+    } else if (filterDateRange.value.length === 2) {
+      // Ensure start date is always before end date for range
+      let [date1, date2] = filterDateRange.value;
+      if (date1 > date2) [date1, date2] = [date2, date1]; // Swap if needed
+
+      startDate = new Date(date1);
+      startDate.setHours(0, 0, 0, 0);
+      endDate = new Date(date2);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    if (startDate && endDate) {
+      filtered = filtered.filter((proyecto) => {
+        const projectDate = new Date(proyecto.fecha_postulacion);
+        // Important: projectDate needs to be compared against startDate/endDate in local time
+        // Or ensure all dates are converted to UTC for comparison if necessary for backend consistency
+        return projectDate >= startDate && projectDate <= endDate;
+      });
+    }
+  }
+
+  return filtered;
+});
+
 // Pagination state
 const page = ref(1);
 const itemsPerPage = ref(10);
+const itemsPerPageOptions = [
+  { value: 10, title: '10' },
+  { value: 25, title: '25' },
+  { value: 50, title: '50' },
+  { value: -1, title: 'Todos' },
+];
 
 const pageCount = computed(() => {
-  return Math.ceil(proyectosCrudo.value.length / itemsPerPage.value);
+  if (itemsPerPage.value === 0) return 1;
+  if (itemsPerPage.value === -1)
+    return Math.ceil(filteredProyectos.value.length / 10); // Still calculate based on filtered items
+  return Math.ceil(filteredProyectos.value.length / itemsPerPage.value);
 });
 
-// Computed property to check if selected apoyo is 'TOTAL'
+const paginatedProyectos = computed(() => {
+  if (itemsPerPage.value === -1) {
+    return filteredProyectos.value;
+  }
+  const start = (page.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredProyectos.value.slice(start, end);
+});
+
+watch(itemsPerPage, () => {
+  page.value = 1;
+});
+
 const isApoyoTotal = computed(() => {
   const totalApoyo = apoyosLookup.value.find((a) => a.nombre === 'TOTAL');
   return totalApoyo && editedProject.value.apoyo === totalApoyo.id_apoyo;
 });
 
-// Computed property to check if selected apoyo is 'PARCIAL'
 const isApoyoParcial = computed(() => {
   const partialApoyo = apoyosLookup.value.find((a) => a.nombre === 'PARCIAL');
   return partialApoyo && editedProject.value.apoyo === partialApoyo.id_apoyo;
 });
 
-// Table headers for v-data-table
+// Table headers (Removed 'actions' column as it's now in the edit modal)
 const headers = [
-  { title: 'Nombre del Proyecto', key: 'nombre', minWidth: '200px' },
+  { title: 'Nombre del Proyecto', key: 'nombre', minWidth: '250px' },
   { title: 'Monto', key: 'monto', align: 'end', minWidth: '120px' },
   { title: 'Fecha Postulación', key: 'fecha_postulacion', minWidth: '120px' },
   {
@@ -308,7 +519,7 @@ const headers = [
     sortable: false,
     minWidth: '200px',
   },
-  { title: 'Unidad', key: 'unidad', align: 'start', minWidth: '150px' },
+  { title: 'Unidad', key: 'unidad', align: 'start', minWidth: '250px' },
   { title: 'Temática', key: 'id_tematica', align: 'start', minWidth: '150px' },
   { title: 'Estatus', key: 'id_estatus', align: 'start', minWidth: '120px' },
   { title: 'Convocatoria', key: 'convocatoria', minWidth: '150px' },
@@ -336,6 +547,7 @@ const headers = [
     sortable: false,
     minWidth: '250px',
   },
+  // Removed the 'actions' column
 ];
 
 // Helper functions for formatting and lookups
@@ -349,7 +561,6 @@ const formatCurrency = (value) => {
   }).format(value);
 };
 
-// Function for formatting date for the form input (YYYY-MM-DD)
 const formatDateForInput = (dateString) => {
   if (!dateString) return null;
   try {
@@ -357,7 +568,6 @@ const formatDateForInput = (dateString) => {
     if (isNaN(date.getTime())) {
       return null;
     }
-    // Adjust for UTC if your API sends UTC and you want local date input
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
       .toISOString()
       .split('T')[0];
@@ -367,23 +577,49 @@ const formatDateForInput = (dateString) => {
   }
 };
 
-// Function for formatting date for table display (DD-MM-YYYY)
 const formatDateDisplay = (dateString) => {
   if (!dateString) return '-';
   try {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
+    // Adjust for UTC if dates are stored without timezone info to prevent day-off issues
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    const adjustedDate = new Date(date.getTime() + userTimezoneOffset);
+
+    if (isNaN(adjustedDate.getTime())) {
       return 'Fecha Inválida';
     }
     return new Intl.DateTimeFormat('es-CL', {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
-    }).format(date);
+    }).format(adjustedDate);
   } catch (e) {
     console.error('Error formatting date for display:', e);
     return 'Fecha Inválida';
   }
+};
+
+// Function to handle date range change from picker
+const onDateRangeChange = (newDates) => {
+  // If user picks two dates, close the menu
+  if (newDates && newDates.length === 2) {
+    dateMenu.value = false;
+  }
+};
+
+// Function to clear date filter
+const clearDateFilter = () => {
+  filterDateRange.value = [];
+};
+
+// --- New Function to Reset All Filters ---
+const resetFilters = () => {
+  searchQuery.value = '';
+  filterUnidad.value = null;
+  filterTematica.value = null;
+  filterEstatus.value = null;
+  filterDateRange.value = [];
+  page.value = 1; // Ensure pagination resets too
 };
 
 const getUnitName = (unitId) => {
@@ -395,7 +631,7 @@ const getUnitName = (unitId) => {
 const getEstatusName = (estatusId) => {
   if (estatusId === null || estatusId === undefined) return '-';
   const item = estatusLookup.value.find((e) => e.id_estatus === estatusId);
-  return item ? item.tipo : `ID Desconocido (${estatusId})`; // Changed from .nombre to .tipo
+  return item ? item.tipo : `ID Desconocido (${estatusId})`;
 };
 
 const getTematicaName = (tematicaId) => {
@@ -432,20 +668,17 @@ const getAcademicosByProyecto = (projectId) => {
   return projectAcademics ? projectAcademics.profesores : [];
 };
 
-// Dialog Functions
+// Original editProject function (no longer needs click.closest check)
 const editProject = (event, { item }) => {
-  editedProject.value = { ...item }; // Shallow copy the item
-  // Format date for the input field
+  editedProject.value = { ...item };
   editedProject.value.fecha_postulacion = formatDateForInput(
     editedProject.value.fecha_postulacion,
   );
 
-  // Handle detalle_apoyo parsing for selectedTags if Apoyo is PARCIAL
   if (
     getApoyoName(editedProject.value.apoyo) === 'PARCIAL' &&
     editedProject.value.detalle_apoyo
   ) {
-    // Split by ', ' and trim each tag
     selectedTags.value = editedProject.value.detalle_apoyo
       .split(', ')
       .map((tag) => tag.trim());
@@ -454,7 +687,6 @@ const editProject = (event, { item }) => {
   }
 
   dialog.value = true;
-  // Ensure the form's validation state is reset when dialog opens
   nextTick(() => {
     if (form.value) {
       form.value.resetValidation();
@@ -477,15 +709,12 @@ const handleApoyoChange = (newApoyoId) => {
     editedProject.value.detalle_apoyo = 'TOTAL';
     selectedTags.value = [];
   } else if (newApoyoName === 'PARCIAL') {
-    // If switching to PARCIAL, clear current text and selected tags
     editedProject.value.detalle_apoyo = null;
     selectedTags.value = [];
   } else {
-    // If some other apoyo type or cleared
     editedProject.value.detalle_apoyo = null;
     selectedTags.value = [];
   }
-  // This helps re-trigger validation for the dynamically shown/hidden fields
   nextTick(() => {
     if (form.value) {
       form.value.validate();
@@ -507,23 +736,18 @@ const saveProject = async () => {
   try {
     const projectToSave = { ...editedProject.value };
 
-    // Finalize detalle_apoyo based on selectedTags for PARCIAL or fixed 'TOTAL'
     if (isApoyoParcial.value) {
-      // Ensure the concatenated string is built from the selectedTags array
       projectToSave.detalle_apoyo = selectedTags.value.join(', ');
     } else if (isApoyoTotal.value) {
       projectToSave.detalle_apoyo = 'TOTAL';
     } else {
-      // If it's not TOTAL or PARCIAL, ensure detalle_apoyo is what the user typed or null
       projectToSave.detalle_apoyo = projectToSave.detalle_apoyo || null;
     }
 
-    // Convert empty strings to null for optional fields before sending to API
     for (const key in projectToSave) {
       if (projectToSave[key] === '') {
         projectToSave[key] = null;
       }
-      // Special handling for numbers: ensure they are numbers or null
       if (
         [
           'monto',
@@ -539,18 +763,18 @@ const saveProject = async () => {
         if (projectToSave[key] !== null && projectToSave[key] !== undefined) {
           projectToSave[key] = Number(projectToSave[key]);
         } else if (projectToSave[key] === '') {
-          // Catch empty strings from number inputs
+          // Ensure empty string is converted to null for number fields
           projectToSave[key] = null;
         }
       }
     }
-    // API expects `fecha_postulacion` as ISO string with Z or just YYYY-MM-DD
-    // If your backend specifically needs an ISO string with time (e.g., "2024-01-01T00:00:00.000Z"), adjust this:
+
     if (projectToSave.fecha_postulacion) {
-      // Assuming formatDateForInput gives YYYY-MM-DD. Convert to ISO string.
       projectToSave.fecha_postulacion = new Date(
         projectToSave.fecha_postulacion,
       ).toISOString();
+    } else {
+      projectToSave.fecha_postulacion = null; // Ensure null if not provided
     }
 
     const response = await fetch(
@@ -565,23 +789,78 @@ const saveProject = async () => {
     );
 
     if (!response.ok) {
-      const errorData = await response.json(); // Attempt to read error message from API
+      const errorData = await response.json();
       throw new Error(
         `HTTP error! Status: ${response.status}. ${errorData.message || JSON.stringify(errorData) || ''
         }`,
       );
     }
 
-    // Refresh the table data after successful update
     await fetchData();
     closeDialog();
   } catch (err) {
     error.value = err;
     console.error('Error saving project:', err);
-    // You might want to display the error message in the dialog itself
-    alert(`Error al guardar: ${err.message}`); // Simple alert for now
+    alert(`Error al guardar: ${err.message}`);
   } finally {
     loading.value = false;
+  }
+};
+
+// New Delete Project Functions
+// This function is now called from within the edit modal
+const confirmDeleteFromEditModal = () => {
+  // Use the currently edited project as the one to delete
+  projectToDelete.value = { ...editedProject.value };
+  projectToDeleteName.value = editedProject.value.nombre;
+
+  dialog.value = false; // Close the edit modal first
+  deleteConfirmDialog.value = true; // Open the delete confirmation dialog
+};
+
+const cancelDelete = () => {
+  deleteConfirmDialog.value = false;
+  projectToDelete.value = null;
+  projectToDeleteName.value = '';
+};
+
+const executeDelete = async () => {
+  if (!projectToDelete.value || !projectToDelete.value.id_proyecto) {
+    console.error('No project selected for deletion.');
+    cancelDelete();
+    return;
+  }
+
+  deleteConfirmDialog.value = false; // Close dialog immediately
+  loading.value = true;
+  error.value = null;
+
+  try {
+    const response = await fetch(
+      `${urlDeleteProyecto}${projectToDelete.value.id_proyecto}`,
+      {
+        method: 'DELETE',
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        `HTTP error! Status: ${response.status}. ${errorData.message || JSON.stringify(errorData) || ''
+        }`,
+      );
+    }
+
+    console.log('Project deleted successfully.');
+    await fetchData(); // Refresh data after deletion
+  } catch (err) {
+    error.value = err;
+    console.error('Error deleting project:', err);
+    alert(`Error al eliminar el proyecto: ${err.message}`);
+  } finally {
+    loading.value = false;
+    projectToDelete.value = null;
+    projectToDeleteName.value = '';
   }
 };
 
@@ -623,7 +902,11 @@ const fetchData = async () => {
     await parseResponse(projectsResponse, proyectosCrudo, 'proyectos');
     await parseResponse(unitsResponse, unidadesLookup, 'unidades');
     await parseResponse(estatusResponse, estatusLookup, 'estatus');
-    await parseResponse(institucionesResponse, institucionesLookup, 'instituciones');
+    await parseResponse(
+      institucionesResponse,
+      institucionesLookup,
+      'instituciones',
+    );
     await parseResponse(apoyosResponse, apoyosLookup, 'apoyos');
     await parseResponse(tematicasResponse, tematicasLookup, 'temáticas');
     await parseResponse(
@@ -646,11 +929,29 @@ const fetchData = async () => {
 };
 
 onMounted(fetchData);
-</script>
 
+// Create Project Modal Logic
+const createProjectModalRef = ref(null);
+
+const openCreateProjectModal = () => {
+  if (createProjectModalRef.value) {
+    createProjectModalRef.value.openDialog();
+  }
+};
+
+const handleProjectCreated = () => {
+  console.log('New project created, refreshing list...');
+  fetchData();
+};
+
+const closeCreateProjectModal = () => {
+  console.log('Create Project Modal closed.');
+};
+</script>
 <style scoped>
+/* (Your existing styles remain here) */
 /* ==========================================================================
-   Base Styles for Excel-like Table
+   Base Styles for Excel-like Table (keep this)
    ========================================================================== */
 
 /* Base container for the Vuetify data table, removing default shadow and adding a black border */
@@ -659,13 +960,6 @@ onMounted(fetchData);
   border: 1px solid #000;
   /* Borde principal de la tabla a negro */
 }
-
-/*
-   The :deep() pseudo-element (or ::v-deep or >>>) is used to style child components
-   that are not part of the current component's scope (shadow DOM).
-   Vuetify components often render their internal elements in a way that requires
-   deep selectors to style them.
-*/
 
 /* Ensure the table content takes up enough space for horizontal scrolling */
 .excel-table.v-data-table :deep(.v-data-table__content table) {
@@ -683,11 +977,12 @@ onMounted(fetchData);
 }
 
 /* ==========================================================================
-   Table Header Styles
+   Table Header Styles (keep this)
    ========================================================================== */
 
 .excel-table.v-data-table :deep(.v-data-table__thead th) {
-  background-color: #f2f2f2;
+  background-color: #e8f5e9;
+  /* Un verde muy claro, casi blanco verdoso */
   /* Header background color */
   color: #333;
   /* Header text color */
@@ -705,17 +1000,18 @@ onMounted(fetchData);
 }
 
 /* ==========================================================================
-   Table Body Styles
+   Table Body Styles (keep this)
    ========================================================================== */
 
 /* Alternating row colors (zebra stripping) */
 .excel-table.v-data-table :deep(.v-data-table__tbody tr:nth-of-type(odd)) {
-  background-color: #f9f9f9;
+  background-color: #f5f5f5;
 }
 
 /* Hover effect for rows */
 .excel-table.v-data-table :deep(.v-data-table__tbody tr:hover) {
-  background-color: #e8f5e9 !important;
+  background-color: #e0f2f7 !important;
+  /* Un azul claro para el hover, similar a la selección de excel */
   /* Background color on hover */
   cursor: pointer;
 }
@@ -740,12 +1036,13 @@ onMounted(fetchData);
 }
 
 /* ==========================================================================
-   Table Footer Styles
+   Table Footer Styles (keep this)
    ========================================================================== */
 
 /* Pagination footer styling */
 .excel-table.v-data-table :deep(.v-data-table__tfoot) {
-  background-color: #f2f2f2;
+  background-color: #e8f5e9;
+  /* Un verde muy claro, consistente con el header */
   /* Footer background color */
   border-top: 1px solid #000;
   /* Top border of the footer */
@@ -758,20 +1055,21 @@ onMounted(fetchData);
 }
 
 /* ==========================================================================
-   Tooltip Styles
+   Tooltip Styles (keep this)
    ========================================================================== */
 
 .v-tooltip>.v-overlay__content {
   background-color: rgba(0, 0, 0, 0.8) !important;
   color: #fff !important;
+  /* Vuelve el color de texto del tooltip a blanco para mejor contraste */
   font-size: 0.8rem;
   padding: 6px 10px;
   border-radius: 4px;
 }
 
 /* ==========================================================================
-   Responsive Adjustments (Media Queries)
-   ========================================================================== */
+   Responsive Adjustments (Media Queries) (keep this)
+   ========================================================================= */
 
 @media (max-width: 768px) {
 

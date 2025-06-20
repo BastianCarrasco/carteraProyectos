@@ -1,0 +1,138 @@
+/* (Your existing styles remain here) */
+/* ==========================================================================
+   Base Styles for Excel-like Table (keep this)
+   ========================================================================== */
+
+/* Base container for the Vuetify data table, removing default shadow and adding a black border */
+.excel-table.v-data-table {
+  box-shadow: none !important;
+
+  /* Borde principal de la tabla a negro */
+}
+
+/* Ensure the table content takes up enough space for horizontal scrolling */
+.excel-table.v-data-table :deep(.v-data-table__content table) {
+  min-width: 2060px;
+  /* Adjust as needed based on content */
+  border-collapse: collapse;
+  /* Crucial for consistent borders between cells */
+}
+
+/* Wrapper for horizontal scrolling when table content overflows */
+.data-table-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  /* Ensures the wrapper takes full available width */
+}
+
+/* ==========================================================================
+   Table Header Styles (keep this)
+   ========================================================================== */
+
+.excel-table.v-data-table :deep(.v-data-table__thead th) {
+  border: 3px solid #000;
+  background-color: #e8f5e9;
+  /* Un verde muy claro, casi blanco verdoso */
+  /* Header background color */
+  color: #333;
+  /* Header text color */
+  font-weight: bold;
+  font-size: 0.875rem;
+  text-transform: capitalize;
+  white-space: nowrap;
+  /* Prevent header text from wrapping */
+  padding: 8px 12px;
+  /* Internal padding of header cells */
+
+  /* IMPORTANT: Apply borders to all sides of header cells */
+  border: 1px solid #000 !important;
+  /* Force black border */
+}
+
+/* ==========================================================================
+   Table Body Styles (keep this)
+   ========================================================================== */
+
+/* Alternating row colors (zebra stripping) */
+.excel-table.v-data-table :deep(.v-data-table__tbody tr:nth-of-type(odd)) {
+  background-color: #f5f5f5;
+  border: 3px solid #000;
+  /* Gris muy claro para las filas impares */
+}
+
+/* Hover effect for rows */
+.excel-table.v-data-table :deep(.v-data-table__tbody tr:hover) {
+  background-color: #e0f2f7 !important;
+  /* Un azul claro para el hover, similar a la selección de excel */
+  /* Background color on hover */
+  cursor: pointer;
+  border: 3px solid #000;
+}
+
+/* Cell styling */
+.excel-table.v-data-table :deep(.v-data-table__tbody td) {
+  padding: 8px 12px;
+  /* Internal padding of body cells */
+  font-size: 0.875rem;
+  white-space: normal;
+  /* Allow cell content to wrap by default */
+
+  /* IMPORTANT: Apply borders to all sides of body cells */
+  border: 1px solid #000 !important;
+  /* Force black border */
+  border: 3px solid #000;
+}
+
+/* Specific styling for 'academicos' cell to handle multiple names, ensuring wrapping */
+.excel-table.v-data-table :deep(.v-data-table__tbody td .academicos-cell) {
+  white-space: normal;
+  /* Ensure this specific cell always allows line breaks */
+  border: 3px solid #000;
+}
+
+/* ==========================================================================
+   Table Footer Styles (keep this)
+   ========================================================================== */
+
+/* Pagination footer styling */
+.excel-table.v-data-table :deep(.v-data-table__tfoot) {
+  background-color: #e8f5e9;
+  /* Un verde muy claro, consistente con el header */
+  /* Footer background color */
+  border-top: 1px solid #000;
+  /* Top border of the footer */
+  padding: 8px 16px;
+  border: 3px solid #000;
+}
+
+/* Hide default Vuetify pagination controls if using custom footer */
+.excel-table.v-data-table :deep(.v-data-table-footer) {
+  display: none;
+  border: 3px solid #000;
+}
+
+/* ==========================================================================
+   Tooltip Styles (keep this)
+   ========================================================================== */
+
+.v-tooltip > .v-overlay__content {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  color: #fff !important;
+  /* Vuelve el color de texto del tooltip a blanco para mejor contraste */
+  font-size: 0.8rem;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 3px solid #000;
+}
+
+/* ==========================================================================
+   Responsive Adjustments (Media Queries) (keep this)
+   ========================================================================= */
+
+@media (max-width: 768px) {
+  .excel-table.v-data-table :deep(.v-data-table__thead th),
+  .excel-table.v-data-table :deep(.v-data-table__tbody td) {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+  }
+}
