@@ -81,10 +81,14 @@ import professorIcon from '../../assets/iconos/profesor.png';
 import hidrogenoIcon from '../../assets/tematicas/hidrogeno.png';
 import litioIcon from '../../assets/tematicas/Litio.png';
 import luxicon from '../../assets/tematicas/luz.png';
+import miner from '../../assets/tematicas/miner.png'
+import energyIcon from '../../assets/tematicas/energy.png';
 
 // Importa SÓLO las imágenes de instituciones/fondos que tienes por el momento
 import corfoLogo from '../../assets/fondos/corfo.png';
 import sqm from '../../assets/fondos/sqm_logo.jpg';
+import codelogo from '../../assets/fondos/logo-codesser.png';
+import anidlogo from '../../assets/fondos/anid.jpg';
 
 const props = defineProps({
   proyectos: Array,
@@ -99,7 +103,9 @@ const thematicImages = {
   'hidrogeno': hidrogenoIcon,
   'hidrógeno': hidrogenoIcon,
   'litio': litioIcon,
-  'contaminación lumínica': luxicon // <-- Make this key lowercase to match normalized input
+  'contaminación lumínica': luxicon,// <-- Make this key lowercase to match normalized input
+  'minería': miner,
+  'almacenamiento energía': energyIcon,
 };
 
 // Mapa de imágenes para instituciones - SÓLO CON LAS INSTITUCIONES EXISTENTES
@@ -107,6 +113,8 @@ const institutionImages = {
   // Asegúrate de que esta clave 'corfo' coincida con el valor exacto de proyecto.institucion (en minúsculas)
   'corfo': corfoLogo,
   'sqm': sqm,
+  'codesser': codelogo,
+  'anid': anidlogo,
 };
 
 const openModal = (proyecto) => {
