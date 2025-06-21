@@ -1,0 +1,183 @@
+/* Contenedor principal del dashboard */
+.project-dashboard {
+  padding: 30px 20px;
+  max-width: 100%;
+  /* ANCHO MÁXIMO DEFINIDO AQUÍ */
+  margin: 0 auto;
+  /* Centra el dashboard en la página */
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  /* Espacio vertical entre las filas principales */
+  text-align: center;
+}
+
+.project-dashboard h1 {
+  color: #2c3e50;
+  margin-bottom: 40px;
+  font-size: 2.8em;
+  font-weight: 700;
+}
+
+.project-dashboard h2 {
+  color: #444;
+  margin-top: 40px;
+  margin-bottom: 25px;
+  font-size: 1.8em;
+}
+
+/* Estilos para las filas principales del dashboard que usan Grid */
+.dashboard-row {
+  display: grid;
+  gap: 30px;
+  /* Espacio entre las columnas de la fila */
+  width: 100%;
+  /* Ocupa el 100% del ancho del .project-dashboard */
+}
+
+/* Fila superior con las tarjetas de resumen (la fila de 3 columnas de la imagen) */
+.top-summary-row {
+  grid-template-columns: 1fr;
+  /* Una columna en móviles */
+}
+
+@media (min-width: 768px) {
+  .top-summary-row {
+    grid-template-columns: 1fr 1fr;
+    /* Dos columnas en tablets */
+  }
+}
+
+@media (min-width: 1024px) {
+  .top-summary-row {
+    /* Tres columnas: Izquierda (proyectos), Centro (escuelas/académicos), Derecha (temáticas) */
+    grid-template-columns: 1.2fr 1fr 0.8fr;
+  }
+}
+
+/* Grupos de componentes dentro de las filas (usados con Flexbox para apilar) */
+.col-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* Espacio entre las tarjetas/componentes apilados verticalmente */
+  height: 100%;
+  /* Asegura que ocupe todo el alto disponible en su celda de la grilla */
+}
+
+/* Estilos específicos para la columna central (Escuelas y Académicos) */
+.center-metrics {
+  background-color: #a7d3ef;
+  /* Fondo azul claro */
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  color: #333;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 1.1em;
+  justify-content: center;
+  align-items: center;
+}
+
+/*
+  Since `:deep` cannot be used with CSS Modules directly, we assume
+  'dashboard-metric-card-override' is a global class or a class
+  added directly to the MetricCard component in the template.
+  This allows styling the MetricCard when it's inside '.center-metrics'.
+*/
+.center-metrics .dashboard-metric-card-override {
+  background-color: #6a9ccf;
+  color: white;
+  box-shadow: none;
+  flex-grow: 1;
+  width: 100%;
+}
+
+.center-metrics .dashboard-metric-card-override .icon {
+  width: 40px;
+  height: 40px;
+  margin-left: 10px;
+  vertical-align: middle;
+  filter: invert(1);
+}
+
+/* Fila de Instrumentos Postulados (ocupa todo el ancho de la grilla) */
+.instruments-row {
+  grid-template-columns: 1fr;
+  /* Siempre una columna */
+}
+
+/* Sección de Gráficos Detallados (la parte inferior del dashboard) */
+.charts-section {
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.charts-section h2 {
+  margin-top: 0;
+  /* Reiniciar margin-top dentro de esta sección */
+}
+
+/* Grillas para los gráficos dentro de la sección de detalles */
+.charts-grid {
+  display: grid;
+  gap: 30px;
+  justify-items: center;
+  align-items: start;
+  margin-top: 20px;
+  /* Espacio entre el título h2 de la sección y la grilla */
+}
+
+/* Grilla para 2 columnas (para tortas y barras pequeñas) */
+.charts-grid-2-columns {
+  grid-template-columns: 1fr;
+  /* 1 columna en móvil */
+}
+
+@media (min-width: 768px) {
+  .charts-grid-2-columns {
+    grid-template-columns: 1fr 1fr;
+    /* 2 columnas en tablets y desktops */
+  }
+}
+
+/* Grilla para 1 columna (para gráficos anchos) */
+.charts-grid-1-column {
+  grid-template-columns: 1fr;
+  /* Siempre 1 columna */
+  margin-top: 30px;
+  /* Espacio si está después de una grilla de 2 columnas */
+}
+
+/*
+  Assuming '.chart-container' is a direct class on the root element
+  of your chart components, or you're fine with this being a global class.
+  If not, you might need to apply max-width directly to the '.chart-item'
+  or pass it down as a prop to the chart components.
+*/
+.charts-grid-2-columns .chart-item :global(.chart-container) {
+  max-width: 500px;
+  /* For example, for pie charts */
+}
+
+.charts-grid-1-column .chart-item :global(.chart-container) {
+  max-width: 800px;
+  /* For a large bar chart */
+}
+
+/* Divisor visual entre las secciones principales del dashboard */
+.section-divider {
+  border: 0;
+  height: 1px;
+  background-image: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0),
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0)
+  );
+  margin: 60px auto;
+  width: 90%;
+}
