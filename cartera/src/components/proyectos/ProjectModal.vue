@@ -3,12 +3,27 @@
         <div class="modal-content">
             <button class="close-btn" @click="close">×</button>
             <h2 class="modal-title">{{ proyecto.nombre }}</h2>
-            <p class="project-status-outside">
-                <strong>Estado Actual:</strong>
-                <span class="badge" :class="getStatusClass(proyecto.estatus)">
-                    {{ proyecto.estatus || "Desconocido" }}
-                </span>
-            </p>
+
+            <!-- NUEVO CONTENEDOR PARA ESTADO Y UNIDAD RESPONSABLE -->
+            <div class="status-and-unit-container">
+                <p class="project-status-outside">
+                    <strong>Unidad Responsable: </strong>
+                    <span class="unit-text">{{ proyecto.unidad }}</span>
+
+                </p>
+
+                <!-- MOVIMIENTO AQUÍ: Unidad Responsable ahora está aquí -->
+                <p class="project-unit-outside" v-if="proyecto.unidad">
+
+                    <strong>Estado Actual:</strong>
+                    <span class="badge" :class="getStatusClass(proyecto.estatus)">
+                        {{ proyecto.estatus || "Desconocido" }}
+                    </span>
+                </p>
+                <!-- FIN DEL MOVIMIENTO -->
+            </div>
+            <!-- FIN DEL NUEVO CONTENEDOR -->
+
 
             <!-- El contenido principal del modal que puede necesitar scroll -->
             <div class="modal-scrollable-content">
@@ -80,9 +95,7 @@
                                 class="single-academic-image-container">
                                 <img :src="proyecto.academicImageLinks[0]" :alt="`Imagen de académico`"
                                     class="project-showcase-img single-image" />
-                                <p class="image-caption single-caption">
-                                    Imagen de académico principal.
-                                </p>
+
                             </div>
 
                             <!-- CASO: Múltiples imágenes de académicos -->
@@ -116,17 +129,11 @@
                             <p v-else>No se especificaron académicos para este proyecto.</p>
                         </div>
 
-                        <!-- Unidad Responsable -->
-                        <div class="section" v-if="proyecto.unidad">
-                            <h3>Unidad Responsable</h3>
-                            <p>{{ proyecto.unidad }}</p>
-                        </div>
-
-                        <!-- Comentarios -->
+                        <!-- Comentarios (Si se desean de nuevo)
                         <div class="section last-section" v-if="proyecto.comentarios">
                             <h3>Comentarios Adicionales</h3>
                             <p class="comments-text">{{ proyecto.comentarios }}</p>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
@@ -187,7 +194,6 @@ const getStatusClass = (status) => {
     justify-content: center;
     align-items: center;
     z-index: 1000;
-    /* Asegura que esté por encima de todo */
 }
 
 .modal-content {
@@ -196,9 +202,7 @@ const getStatusClass = (status) => {
     padding: 30px;
     width: 90%;
     max-width: 950px;
-    /* Ancho máximo razonable */
     max-height: 90vh;
-    /* *** CAMBIO CLAVE ***: Altura máxima basada en el viewport */
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
     position: relative;
     display: flex;
@@ -217,7 +221,6 @@ const getStatusClass = (status) => {
     padding: 5px;
     line-height: 1;
     z-index: 1001;
-    /* Asegura que esté por encima del contenido y del scroll */
 }
 
 .close-btn:hover {
@@ -231,33 +234,66 @@ const getStatusClass = (status) => {
     font-size: 2.2em;
     text-align: center;
     width: 100%;
-    /* No cambiará de tamaño, pero ayuda a que se centre */
     flex-shrink: 0;
-    /* Evita que el título se encoja si hay poco espacio */
+}
+
+/* NUEVOS ESTILOS PARA EL CONTENEDOR DE ESTADO Y UNIDAD */
+.status-and-unit-container {
+    display: flex;
+    justify-content: space-between;
+    /* Para separar los elementos */
+    align-items: flex-start;
+    /* Alinea los items en la parte superior si varían en altura */
+    margin-bottom: 25px;
+    /* Margen inferior para separarlo del contenido scrollable */
+    flex-wrap: wrap;
+    /* Permite que los elementos se envuelvan en pantallas pequeñas */
+    padding: 0 10px;
+    /* Un poco de padding horizontal para no pegarse a los bordes */
 }
 
 .project-status-outside {
-    text-align: center;
-    margin-bottom: 25px;
+    text-align: left;
+    /* Alinea el texto del estado a la izquierda */
+    margin-bottom: 0;
+    /* Elimina margen inferior para el flexbox */
     font-size: 1.1em;
     color: #555;
     flex-shrink: 0;
     /* Evita que el estado se encoja */
+    /* Añade flex-grow si quieres que ocupe más espacio en la izquierda */
+    flex-grow: 1;
 }
 
-/* *** CAMBIO CLAVE ***: Nuevo contenedor para el contenido scrollable */
+/* Nuevo estilo para la unidad responsable fuera del grid principal */
+.project-unit-outside {
+    text-align: right;
+    /* Alinea el texto de la unidad a la derecha */
+    margin-bottom: 0;
+    /* Elimina margen inferior para el flexbox */
+    font-size: 1.1em;
+    color: #555;
+    flex-shrink: 0;
+    /* Evita que la unidad se encoja */
+    /* Añade flex-grow si quieres que ocupe más espacio en la derecha */
+    flex-grow: 1;
+}
+
+/* Estilo para el texto de la unidad, sin negrita */
+.project-unit-outside .unit-text {
+    font-weight: normal;
+    /* Asegura que el texto de la unidad no sea negrita por defecto */
+    color: #333;
+    /* Color de texto para la unidad */
+}
+
+
 .modal-scrollable-content {
     flex-grow: 1;
-    /* Permite que este contenedor ocupe el espacio restante */
     overflow-y: auto;
-    /* Habilita el scroll vertical si el contenido excede el espacio */
     padding-right: 15px;
-    /* Espacio para que el scrollbar no tape el contenido */
-    /* Opcional: Estilizar el scrollbar para webkit si lo deseas */
     scrollbar-width: thin;
-    /* Firefox */
     scrollbar-color: #42b983 #f0f0f0;
-    /* Firefox */
 }
 
 .modal-scrollable-content::-webkit-scrollbar {
@@ -282,7 +318,6 @@ const getStatusClass = (status) => {
     grid-template-columns: 1.2fr 1fr;
     gap: 25px;
     padding-bottom: 15px;
-    /* Asegura un poco de espacio al final del scrollable content */
 }
 
 .left-column,
@@ -496,9 +531,24 @@ const getStatusClass = (status) => {
         font-size: 1.8em;
     }
 
-    .project-status-outside {
-        font-size: 1em;
+    /* Ajuste para el nuevo contenedor en móvil */
+    .status-and-unit-container {
+        flex-direction: column;
+        /* Apila los elementos en móvil */
+        align-items: flex-start;
+        /* Alinea a la izquierda */
+        gap: 10px;
+        /* Espacio vertical entre ellos */
         margin-bottom: 15px;
+        /* Ajusta el margen si es necesario */
+    }
+
+    .project-status-outside,
+    .project-unit-outside {
+        text-align: left;
+        /* Asegura alineación a la izquierda en móvil */
+        font-size: 1em;
+        margin-bottom: 0;
     }
 
     .section {
