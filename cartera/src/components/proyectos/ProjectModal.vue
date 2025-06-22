@@ -3,101 +3,130 @@
         <div class="modal-content">
             <button class="close-btn" @click="close">×</button>
             <h2 class="modal-title">{{ proyecto.nombre }}</h2>
+            <p class="project-status-outside">
+                <strong>Estado Actual:</strong>
+                <span class="badge" :class="getStatusClass(proyecto.estatus)">
+                    {{ proyecto.estatus || "Desconocido" }}
+                </span>
+            </p>
 
-            <div class="modal-body-grid">
-                <!-- COLUMNA IZQUIERDA: RESUMEN Y DETALLES CLAVE -->
-                <div class="left-column">
-                    <!-- Detalles principales (Temática, Institución, Monto, Apoyo) -->
-                    <div class="section primary-details-card">
-                        <h3>Detalles del Proyecto</h3>
-                        <div class="detail-group">
-                            <div class="detail-item">
-                                <template v-if="getThematicImage(proyecto.tematica)">
-                                    <img :src="getThematicImage(proyecto.tematica)" alt="Ícono de temática"
-                                        class="detail-icon-image" />
-                                </template>
-                                <i v-else class="fas fa-tag detail-icon"></i>
+            <!-- El contenido principal del modal que puede necesitar scroll -->
+            <div class="modal-scrollable-content">
+                <div class="modal-body-grid">
+                    <!-- COLUMNA IZQUIERDA: RESUMEN Y DETALLES CLAVE -->
+                    <div class="left-column">
+                        <!-- Detalles principales (Temática, Institución, Monto, Apoyo) -->
+                        <div class="section primary-details-card">
+                            <h3>Detalles del Proyecto</h3>
+                            <div class="detail-group">
+                                <div class="detail-item">
+                                    <template v-if="getThematicImage(proyecto.tematica)">
+                                        <img :src="getThematicImage(proyecto.tematica)" alt="Ícono de temática"
+                                            class="detail-icon-image" />
+                                    </template>
+                                    <i v-else class="fas fa-tag detail-icon"></i>
+                                    <p>
+                                        <strong>Temática:</strong>
+                                        {{ proyecto.tematica || "Sin temática" }}
+                                    </p>
+                                </div>
+                                <div class="detail-item">
+                                    <template v-if="getInstitutionImage(proyecto.institucion)">
+                                        <img :src="getInstitutionImage(proyecto.institucion)" alt="Logo de institución"
+                                            class="detail-icon-image" />
+                                    </template>
+                                    <i v-else class="fas fa-university detail-icon"></i>
+                                    <p>
+                                        <strong>Institución:</strong>
+                                        {{ proyecto.institucion || "Sin institución" }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="detail-group finance-details">
                                 <p>
-                                    <strong>Temática:</strong>
-                                    {{ proyecto.tematica || 'Sin temática' }}
+                                    <strong>Monto Solicitado:</strong>
+                                    {{ formatCurrency(proyecto.monto) }}
+                                </p>
+                                <p>
+                                    <strong>Tipo de Apoyo:</strong>
+                                    {{ proyecto.apoyo || "No especificado" }} -
+                                    {{ proyecto.detalle_apoyo || "No especificado" }}
                                 </p>
                             </div>
-                            <div class="detail-item">
-                                <template v-if="getInstitutionImage(proyecto.institucion)">
-                                    <img :src="getInstitutionImage(proyecto.institucion)" alt="Logo de institución"
-                                        class="detail-icon-image" />
-                                </template>
-                                <i v-else class="fas fa-university detail-icon"></i>
-                                <p>
-                                    <strong>Institución:</strong>
-                                    {{ proyecto.institucion || 'Sin institución' }}
+                        </div>
+
+                        <!-- Postulación -->
+                        <div class="section">
+                            <h3>Información de Postulación</h3>
+                            <p>
+                                <strong>Fecha de Postulación:</strong>
+                                {{ formatDate(proyecto.fecha_postulacion) }}
+                            </p>
+                            <p>
+                                <strong>Convocatoria:</strong>
+                                {{ proyecto.nombre_convo || "No especificada" }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- COLUMNA DERECHA: SECCIONES ADICIONALES Y COMENTARIOS -->
+                    <div class="right-column">
+                        <!-- Sección para las imágenes de los académicos -->
+                        <div class="section image-showcase-section">
+                            <h3>Imágenes de Académicos</h3>
+
+                            <!-- CASO: Una sola imagen de académico -->
+                            <div v-if="proyecto.academicImageLinks && proyecto.academicImageLinks.length === 1"
+                                class="single-academic-image-container">
+                                <img :src="proyecto.academicImageLinks[0]" :alt="`Imagen de académico`"
+                                    class="project-showcase-img single-image" />
+                                <p class="image-caption single-caption">
+                                    Imagen de académico principal.
+                                </p>
+                            </div>
+
+                            <!-- CASO: Múltiples imágenes de académicos -->
+                            <div v-else-if="
+                                proyecto.academicImageLinks && proyecto.academicImageLinks.length > 1
+                            " class="academic-images-grid">
+                                <img v-for="(imageLink, index) in proyecto.academicImageLinks" :key="index"
+                                    :src="imageLink" :alt="`Imagen de académico ${index + 1}`"
+                                    class="project-showcase-img grid-image" />
+                            </div>
+
+                            <!-- CASO: No hay imágenes de académicos -->
+                            <div v-else class="no-image-container">
+                                <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' viewBox='0 0 100 100'><rect x='0' y='0' width='100' height='100' fill='%23e0e0e0'/><text x='50' y='50' font-family='Arial' font-size='10' fill='%23666' text-anchor='middle' alignment-baseline='middle'>No Image Available</text></svg>"
+                                    alt="No hay imagen disponible" class="project-showcase-img no-image" />
+                                <p class="image-caption no-image-caption">
+                                    No hay imágenes disponibles de los académicos.
                                 </p>
                             </div>
                         </div>
-                        <div class="detail-group finance-details">
-                            <p>
-                                <strong>Monto Solicitado:</strong>
-                                {{ formatCurrency(proyecto.monto) }}
-                            </p>
-                            <p>
-                                <strong>Tipo de Apoyo:</strong>
-                                {{ proyecto.apoyo || 'No especificado' }}
-                            </p>
+
+                        <!-- Académicos -->
+                        <div class="section">
+                            <h3>Académicos Involucrados</h3>
+                            <ul v-if="proyecto.profesores && proyecto.profesores.length > 0">
+                                <li v-for="(profesor, index) in proyecto.profesores"
+                                    :key="profesor.id_academico || index">
+                                    {{ profesor.nombre_completo }}
+                                </li>
+                            </ul>
+                            <p v-else>No se especificaron académicos para este proyecto.</p>
                         </div>
-                        <div class="detail-group status-detail">
-                            <p><strong>Estado Actual:</strong></p>
-                            <span class="badge" :class="getStatusClass(proyecto.estatus)">
-                                {{ proyecto.estatus || 'Desconocido' }}
-                            </span>
+
+                        <!-- Unidad Responsable -->
+                        <div class="section" v-if="proyecto.unidad">
+                            <h3>Unidad Responsable</h3>
+                            <p>{{ proyecto.unidad }}</p>
                         </div>
-                    </div>
 
-                    <!-- Postulación -->
-                    <div class="section">
-                        <h3>Información de Postulación</h3>
-                        <p>
-                            <strong>Fecha de Postulación:</strong>
-                            {{ formatDate(proyecto.fecha_postulacion) }}
-                        </p>
-                        <p>
-                            <strong>Convocatoria:</strong>
-                            {{ proyecto.nombre_convo || 'No especificada' }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- COLUMNA DERECHA: SECCIONES ADICIONALES Y COMENTARIOS -->
-                <div class="right-column">
-                    <!-- Sección para la imagen destacada -->
-                    <div class="section image-showcase-section">
-                        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100%' height='100%' viewBox='0 0 100 100'><rect x='0' y='0' width='100' height='100' fill='%23e0e0e0'/><text x='50' y='50' font-family='Arial' font-size='10' fill='%23666' text-anchor='middle' alignment-baseline='middle'>Placeholder Image</text></svg>"
-                            alt="Imagen representativa del proyecto (próximamente)" class="project-showcase-img" />
-                        <p class="image-caption">
-                            Impacto y alcance de la investigación.
-                        </p>
-                    </div>
-
-                    <!-- Académicos -->
-                    <div class="section">
-                        <h3>Académicos Involucrados</h3>
-                        <ul v-if="proyecto.profesores && proyecto.profesores.length > 0">
-                            <li v-for="(profesor, index) in proyecto.profesores" :key="index">
-                                {{ profesor }}
-                            </li>
-                        </ul>
-                        <p v-else>No se especificaron académicos para este proyecto.</p>
-                    </div>
-
-                    <!-- Unidad Responsable -->
-                    <div class="section" v-if="proyecto.unidad">
-                        <h3>Unidad Responsable</h3>
-                        <p>{{ proyecto.unidad }}</p>
-                    </div>
-
-                    <!-- Comentarios -->
-                    <div class="section last-section" v-if="proyecto.comentarios">
-                        <h3>Comentarios Adicionales</h3>
-                        <p class="comments-text">{{ proyecto.comentarios }}</p>
+                        <!-- Comentarios -->
+                        <div class="section last-section" v-if="proyecto.comentarios">
+                            <h3>Comentarios Adicionales</h3>
+                            <p class="comments-text">{{ proyecto.comentarios }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -146,454 +175,349 @@ const getStatusClass = (status) => {
 </script>
 
 <style scoped>
-/* LOS ESTILOS CSS SON EXACTAMENTE LOS MISMOS QUE EN LA VERSIÓN ANTERIOR,
-   YA QUE SE APLICAN A LAS CLASES CSS, NO A LA FORMA EN QUE LA IMAGEN FUE CARGADA. */
-
-/* GENERAL MODAL STYLES (largely unchanged, but adjusted for new layout) */
+/* Estilos generales del modal */
 .modal-overlay {
     position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    /* Slightly darker overlay */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 1000;
-    padding: 10px;
-    /* Padding for very small screens */
+    /* Asegura que esté por encima de todo */
 }
 
 .modal-content {
-    background: white;
-    padding: 2.5rem;
-    /* More generous padding */
-    max-width: 950px;
-    /* Wider modal for two columns */
-    width: 98%;
-    /* Even more width on small screens */
+    background-color: #f7f7f7;
     border-radius: 12px;
-    /* Slightly more rounded corners */
-    position: relative;
+    padding: 30px;
+    width: 90%;
+    max-width: 950px;
+    /* Ancho máximo razonable */
+    max-height: 90vh;
+    /* *** CAMBIO CLAVE ***: Altura máxima basada en el viewport */
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-    /* Stronger shadow */
+    position: relative;
     display: flex;
     flex-direction: column;
-    max-height: 95vh;
-    /* Allow it to be taller, with internal scroll */
 }
 
 .close-btn {
     position: absolute;
-    top: 1rem;
-    right: 1.2rem;
-    background: transparent;
+    top: 15px;
+    right: 15px;
+    background: none;
     border: none;
-    font-size: 2rem;
-    /* Larger close button */
-    cursor: pointer;
+    font-size: 1.8em;
     color: #888;
-    transition: color 0.2s ease-in-out;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+    z-index: 1001;
+    /* Asegura que esté por encima del contenido y del scroll */
 }
 
 .close-btn:hover {
     color: #333;
-    transform: scale(1.1);
 }
 
 .modal-title {
-    font-size: 2rem;
-    /* Larger title */
-    margin-bottom: 1.5rem;
-    color: #1a2a3a;
-    /* Darker, more professional color */
+    color: #2c3e50;
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 2.2em;
     text-align: center;
-    border-bottom: 2px solid #e0e0e0;
-    /* Thicker border */
-    padding-bottom: 1rem;
-    font-weight: 700;
-    /* Bolder title */
+    width: 100%;
+    /* No cambiará de tamaño, pero ayuda a que se centre */
+    flex-shrink: 0;
+    /* Evita que el título se encoja si hay poco espacio */
 }
 
-/* MAIN GRID LAYOUT FOR MODAL BODY */
+.project-status-outside {
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 1.1em;
+    color: #555;
+    flex-shrink: 0;
+    /* Evita que el estado se encoja */
+}
+
+/* *** CAMBIO CLAVE ***: Nuevo contenedor para el contenido scrollable */
+.modal-scrollable-content {
+    flex-grow: 1;
+    /* Permite que este contenedor ocupe el espacio restante */
+    overflow-y: auto;
+    /* Habilita el scroll vertical si el contenido excede el espacio */
+    padding-right: 15px;
+    /* Espacio para que el scrollbar no tape el contenido */
+    /* Opcional: Estilizar el scrollbar para webkit si lo deseas */
+    scrollbar-width: thin;
+    /* Firefox */
+    scrollbar-color: #42b983 #f0f0f0;
+    /* Firefox */
+}
+
+.modal-scrollable-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-scrollable-content::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 10px;
+}
+
+.modal-scrollable-content::-webkit-scrollbar-thumb {
+    background-color: #42b983;
+    border-radius: 10px;
+    border: 2px solid #f0f0f0;
+}
+
+
+/* Distribución en columnas */
 .modal-body-grid {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
-    /* Left column (summary) is 1 part, right (details) is 1.2 parts */
-    gap: 30px;
-    /* Space between columns */
-    flex-grow: 1;
-    /* Allow content area to fill remaining space */
-    overflow-y: auto;
-    /* Enable scrolling for the whole body grid */
-    padding-right: 15px;
-    /* Space for scrollbar */
+    grid-template-columns: 1.2fr 1fr;
+    gap: 25px;
+    padding-bottom: 15px;
+    /* Asegura un poco de espacio al final del scrollable content */
 }
 
 .left-column,
 .right-column {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    /* Space between sections within each column */
+    gap: 18px;
 }
 
-/* SECTION STYLES - REFINED FOR "PRESENTATION CARD" LOOK */
+/* Estilo general de las secciones */
 .section {
-    background-color: #ffffff;
-    /* White background for sections */
-    border: 1px solid #e5e5e5;
-    /* Light grey border */
+    background-color: #fff;
     border-radius: 10px;
-    /* Rounded corners for sections */
-    padding: 1.5rem;
-    /* Generous padding inside sections */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-    /* Subtle shadow for depth */
-    display: flex;
-    flex-direction: column;
-    height: fit-content;
-    /* Ensure sections only take up needed height */
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border-left: 5px solid #42b983;
 }
 
 .section h3 {
-    font-size: 1.3rem;
-    /* Larger heading for sections */
-    color: #2c3e50;
-    /* Darker heading color */
-    margin-bottom: 1rem;
-    border-left: 6px solid #3498db;
-    /* Stronger accent bar */
-    padding-left: 12px;
-    font-weight: 600;
-    /* Semi-bold heading */
+    color: #34495e;
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    font-size: 1.3em;
 }
 
-.section p {
-    line-height: 1.6;
-    color: #444;
-    /* Darker text for readability */
-    margin-bottom: 0.8rem;
-    /* More space between paragraphs */
-}
-
-.section p:last-child {
-    margin-bottom: 0;
-    /* No margin on last paragraph */
-}
-
-.section p strong {
-    color: #222;
-    /* Bolder emphasis */
-}
-
-/* Specific Styles for Primary Details Card */
 .primary-details-card {
-    /* No specific grid/flex for this section itself, content inside is handled */
+    padding-bottom: 15px;
 }
 
 .detail-group {
-    display: flex;
-    flex-wrap: wrap;
-    /* Allow items to wrap */
-    gap: 20px;
-    /* Space between detail items */
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px dashed #f0f0f0;
-    /* Soft separator */
-    justify-content: space-around;
-    /* Distribute items */
-}
-
-.detail-group:last-of-type {
-    border-bottom: none;
-    /* No border for the last group */
+    margin-bottom: 15px;
 }
 
 .detail-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    gap: 8px;
-    font-size: 1rem;
-    /* Slightly larger text */
-    color: #555;
-    flex: 1 1 45%;
-    /* Allow two items per row, with wrap */
-    min-width: 150px;
-    /* Minimum width for each detail item */
+    margin-bottom: 10px;
 }
 
-.detail-icon-image {
-    width: 3.2em;
-    /* Larger icons */
-    height: 3.2em;
-    object-fit: contain;
+.detail-item p {
+    margin: 0;
+    font-size: 0.95em;
+    color: #333;
 }
 
 .detail-icon {
-    font-size: 3.2em;
-    /* Larger icons */
-    color: #666;
+    font-size: 1.3em;
+    color: #42b983;
+    margin-right: 10px;
+    width: 25px;
+    text-align: center;
 }
 
-.finance-details {
-    flex-direction: column;
-    /* Stack financial details */
-    align-items: flex-start;
-    /* Align text to start */
+.detail-icon-image {
+    width: 25px;
+    height: 25px;
+    object-fit: contain;
+    margin-right: 10px;
 }
 
 .finance-details p {
-    width: 100%;
-    /* Full width for each financial detail */
-}
-
-.status-detail {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    /* Center status */
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px dashed #f0f0f0;
-}
-
-.status-detail p {
-    margin-bottom: 0.5rem;
-    font-weight: 600;
-}
-
-/* BADGE STYLES (mostly unchanged, but ensuring alignment) */
-.badge {
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
-    /* More rounded */
-    font-weight: bold;
-    color: white;
-    display: inline-flex;
-    /* Use flex to better align text if needed */
-    align-items: center;
-    justify-content: center;
-    min-width: 100px;
-    /* Wider badges */
-    text-align: center;
+    margin-bottom: 8px;
     font-size: 0.95em;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    /* Slight shadow for badges */
+    color: #333;
+}
+
+.badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    color: white;
+    margin-left: 8px;
+    display: inline-block;
 }
 
 .badge.approved {
-    background: #28a745;
-    /* Deeper green */
+    background-color: #28a745;
 }
 
 .badge.submitted {
-    background: #007bff;
-    /* Standard blue */
+    background-color: #007bff;
 }
 
 .badge.rejected {
-    background: #dc3545;
-    /* Standard red */
+    background-color: #dc3545;
 }
 
 .badge.draft {
-    background: #ffc107;
-    /* Standard yellow */
-    color: #333;
-    /* Darker text for visibility */
+    background-color: #6c757d;
 }
 
 .badge.in-progress {
-    background: #6f42c1;
-    /* Deeper purple */
+    background-color: #ffc107;
+    color: #343a40;
 }
 
 .badge.unknown {
-    background: #6c757d;
-    /* Darker grey */
+    background-color: #aaaaaa;
 }
 
-/* List Styles */
-.section ul {
-    list-style: none;
-    /* Remove default bullets */
-    padding: 0;
-    /* Remove default padding */
-    margin-top: 10px;
-}
-
-.section ul li {
-    background-color: #f0f8ff;
-    /* Light blue background for list items */
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    font-size: 0.95rem;
-    color: #333;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    /* Subtle shadow */
-}
-
-.section ul li::before {
-    content: '\2022';
-    /* Unicode bullet point */
-    color: #3498db;
-    /* Blue bullet */
-    font-weight: bold;
-    display: inline-block;
-    width: 1em;
-    margin-left: -1em;
-    font-size: 1.2em;
-}
-
-.comments-text {
-    background-color: #fdfdfd;
-    border-left: 4px solid #f0f0f0;
-    padding: 10px 15px;
-    font-style: italic;
-    color: #666;
-    border-radius: 5px;
-    margin-top: 10px;
-}
-
-/* NEW STYLES FOR IMAGE SHOWCASE SECTION */
 .image-showcase-section {
-    padding: 0;
-    /* Remove padding from the section itself, content handles it */
-    overflow: hidden;
-    /* Ensure image doesn't overflow rounded corners */
-    text-align: center;
-    position: relative;
-    /* For caption positioning */
+    padding-bottom: 0;
 }
 
 .project-showcase-img {
     width: 100%;
-    /* Make image fill the section width */
-    height: auto;
-    /* Maintain aspect ratio */
-    display: block;
-    /* Remove extra space below image */
-    border-radius: 10px 10px 0 0;
-    /* Only top corners rounded if no padding */
-    object-fit: cover;
-    /* Crop if necessary to fill space */
-    max-height: 250px;
-    /* Limit height to prevent it from being too large */
+    border-radius: 8px;
+    background-color: #f0f0f0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.image-caption {
-    position: absolute;
-    bottom: 0;
-    /* Align to the bottom of the section */
-    left: 0;
+.single-academic-image-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 180px;
+}
+
+.single-academic-image-container .project-showcase-img.single-image {
+    max-width: 75%;
+    height: 140px;
+    object-fit: contain;
+    margin-bottom: 8px;
+}
+
+.image-caption.single-caption {
+    font-size: 0.8em;
+    color: #666;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.academic-images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.academic-images-grid .project-showcase-img.grid-image {
     width: 100%;
-    background: rgba(0, 0, 0, 0.6);
-    /* Semi-transparent black background */
-    color: white;
-    padding: 8px 15px;
-    font-size: 0.9em;
-    font-style: italic;
-    border-radius: 0 0 10px 10px;
-    /* Rounded bottom corners */
+    height: 90px;
+    object-fit: cover;
 }
 
-/* Responsive Adjustments */
-@media (max-width: 992px) {
+.no-image-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 180px;
+}
+
+.project-showcase-img.no-image {
+    height: 140px;
+    object-fit: contain;
+    margin-bottom: 8px;
+}
+
+.image-caption.no-image-caption {
+    font-size: 0.8em;
+    color: #666;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.section ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.section li {
+    background-color: #f8faff;
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    border-left: 3px solid #63a46a;
+    font-size: 0.9em;
+    color: #333;
+}
+
+.section li:last-child {
+    margin-bottom: 0;
+}
+
+.section.last-section {
+    margin-bottom: 0;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        padding: 20px;
+    }
+
     .modal-body-grid {
         grid-template-columns: 1fr;
-        /* Stack columns on smaller screens */
-        gap: 25px;
-        padding-right: 0;
-        /* Remove padding if not needed for scrollbar */
-    }
-
-    .modal-content {
-        padding: 1.8rem;
-    }
-
-    .left-column,
-    .right-column {
         gap: 15px;
-    }
-
-    .detail-group {
-        flex-direction: column;
-        /* Stack details vertically on smaller screens */
-        gap: 15px;
-    }
-
-    .detail-item,
-    .finance-details p {
-        min-width: unset;
-        /* Remove min-width to allow full stacking */
-        width: 100%;
-        align-items: flex-start;
-        /* Align text to left when stacked */
-        text-align: left;
-    }
-
-    .image-showcase-section {
-        padding: 1.5rem;
-        /* Re-add padding for stacked layout if desired */
-    }
-
-    .project-showcase-img {
-        border-radius: 8px;
-        /* Round all corners for stacked image */
-        max-height: 200px;
-        /* Adjust max height for smaller screens */
-    }
-
-    .image-caption {
-        position: static;
-        /* Let caption flow with content */
-        background: none;
-        color: #555;
-        padding: 10px 0 0;
-        font-size: 0.85em;
-    }
-}
-
-@media (max-width: 576px) {
-    .modal-content {
-        padding: 1rem;
-        width: 100%;
-        margin: 0;
-        border-radius: 0;
-        /* Full screen on very small devices */
-    }
-
-    .close-btn {
-        top: 0.5rem;
-        right: 0.8rem;
-        font-size: 1.5rem;
     }
 
     .modal-title {
-        font-size: 1.5rem;
-        margin-bottom: 1rem;
+        font-size: 1.8em;
+    }
+
+    .project-status-outside {
+        font-size: 1em;
+        margin-bottom: 15px;
+    }
+
+    .section {
+        padding: 15px;
     }
 
     .section h3 {
-        font-size: 1.1rem;
+        font-size: 1.1em;
+        margin-bottom: 10px;
     }
 
-    .detail-icon-image,
-    .detail-icon {
-        width: 2.5em;
-        height: 2.5em;
-        font-size: 2.5em;
+    .detail-item p,
+    .finance-details p,
+    .section ul li {
+        font-size: 0.85em;
     }
 
-    .project-showcase-img {
-        max-height: 150px;
-        /* Even smaller for very small screens */
+    .image-caption {
+        font-size: 0.75em;
     }
 }
 </style>

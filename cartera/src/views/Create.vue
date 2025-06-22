@@ -662,10 +662,15 @@ const getApoyoName = (apoyoId) => {
 
 const getAcademicosByProyecto = (projectId) => {
   if (projectId === null || projectId === undefined) return [];
+
   const projectAcademics = academicosXProyectoLookup.value.find(
     (pa) => pa.id_proyecto === projectId,
   );
-  return projectAcademics ? projectAcademics.profesores : [];
+
+  // Si se encuentra el proyecto y tiene profesores, mapear los nombres
+  return projectAcademics && projectAcademics.profesores
+    ? projectAcademics.profesores.map((profesor) => profesor.nombre_completo)
+    : [];
 };
 
 // Original editProject function (no longer needs click.closest check)

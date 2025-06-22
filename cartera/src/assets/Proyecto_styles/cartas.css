@@ -1,0 +1,386 @@
+/* LOS ESTILOS CSS SON EXACTAMENTE LOS MISMOS QUE EN LA VERSIÓN ANTERIOR,
+   YA QUE SE APLICAN A LAS CLASES CSS, NO A LA FORMA EN QUE LA IMAGEN FUE CARGADA. */
+
+/* GENERAL MODAL STYLES (largely unchanged, but adjusted for new layout) */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  /* Slightly darker overlay */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 10px;
+  /* Padding for very small screens */
+}
+
+.modal-content {
+  background: white;
+  padding: 2.5rem;
+  /* More generous padding */
+  max-width: 950px;
+  /* Wider modal for two columns */
+  width: 98%;
+  /* Even more width on small screens */
+  border-radius: 12px;
+  /* Slightly more rounded corners */
+  position: relative;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  /* Stronger shadow */
+  display: flex;
+  flex-direction: column;
+  max-height: 95vh;
+  /* Allow it to be taller, with internal scroll */
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1.2rem;
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  /* Larger close button */
+  cursor: pointer;
+  color: #888;
+  transition: color 0.2s ease-in-out;
+}
+
+.close-btn:hover {
+  color: #333;
+  transform: scale(1.1);
+}
+
+.modal-title {
+  font-size: 2rem;
+  /* Larger title */
+  margin-bottom: 1.5rem;
+  color: #1a2a3a;
+  /* Darker, more professional color */
+  text-align: center;
+  border-bottom: 2px solid #e0e0e0;
+  /* Thicker border */
+  padding-bottom: 1rem;
+  font-weight: 700;
+  /* Bolder title */
+}
+
+/* MAIN GRID LAYOUT FOR MODAL BODY */
+.modal-body-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  /* Left column (summary) is 1 part, right (details) is 1.2 parts */
+  gap: 30px;
+  /* Space between columns */
+  flex-grow: 1;
+  /* Allow content area to fill remaining space */
+  overflow-y: auto;
+  /* Enable scrolling for the whole body grid */
+  padding-right: 15px;
+  /* Space for scrollbar */
+}
+
+.left-column,
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  /* Space between sections within each column */
+}
+
+/* SECTION STYLES - REFINED FOR "PRESENTATION CARD" LOOK */
+.section {
+  background-color: #ffffff;
+  /* White background for sections */
+  border: 1px solid #e5e5e5;
+  /* Light grey border */
+  border-radius: 10px;
+  /* Rounded corners for sections */
+  padding: 1.5rem;
+  /* Generous padding inside sections */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  /* Subtle shadow for depth */
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  /* Ensure sections only take up needed height */
+}
+
+.section h3 {
+  font-size: 1.3rem;
+  /* Larger heading for sections */
+  color: #2c3e50;
+  /* Darker heading color */
+  margin-bottom: 1rem;
+  border-left: 6px solid #3498db;
+  /* Stronger accent bar */
+  padding-left: 12px;
+  font-weight: 600;
+  /* Semi-bold heading */
+}
+
+.section p {
+  line-height: 1.6;
+  color: #444;
+  /* Darker text for readability */
+  margin-bottom: 0.8rem;
+  /* More space between paragraphs */
+}
+
+.section p:last-child {
+  margin-bottom: 0;
+  /* No margin on last paragraph */
+}
+
+.section p strong {
+  color: #222;
+  /* Bolder emphasis */
+}
+
+/* Specific Styles for Primary Details Card */
+.primary-details-card {
+  /* No specific grid/flex for this section itself, content inside is handled */
+}
+
+.detail-group {
+  display: flex;
+  flex-wrap: wrap;
+  /* Allow items to wrap */
+  gap: 20px;
+  /* Space between detail items */
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed #f0f0f0;
+  /* Soft separator */
+  justify-content: space-around;
+  /* Distribute items */
+}
+
+.detail-group:last-of-type {
+  border-bottom: none;
+  /* No border for the last group */
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  font-size: 1rem;
+  /* Slightly larger text */
+  color: #555;
+  flex: 1 1 45%;
+  /* Allow two items per row, with wrap */
+  min-width: 150px;
+  /* Minimum width for each detail item */
+}
+
+.detail-icon-image {
+  width: 3.2em;
+  /* Larger icons */
+  height: 3.2em;
+  object-fit: contain;
+}
+
+.detail-icon {
+  font-size: 3.2em;
+  /* Larger icons */
+  color: #666;
+}
+
+.finance-details {
+  flex-direction: column;
+  /* Stack financial details */
+  align-items: flex-start;
+  /* Align text to start */
+}
+
+.finance-details p {
+  width: 100%;
+  /* Full width for each financial detail */
+}
+
+.status-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Center status */
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed #f0f0f0;
+}
+
+.status-detail p {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+/* BADGE STYLES (mostly unchanged, but ensuring alignment) */
+.badge {
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  /* More rounded */
+  font-weight: bold;
+  color: white;
+  display: inline-flex;
+  /* Use flex to better align text if needed */
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  /* Wider badges */
+  text-align: center;
+  font-size: 0.95em;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  /* Slight shadow for badges */
+}
+
+.badge.approved {
+  background: #28a745;
+  /* Deeper green */
+}
+
+.badge.submitted {
+  background: #007bff;
+  /* Standard blue */
+}
+
+.badge.rejected {
+  background: #dc3545;
+  /* Standard red */
+}
+
+.badge.draft {
+  background: #ffc107;
+  /* Standard yellow */
+  color: #333;
+  /* Darker text for visibility */
+}
+
+.badge.in-progress {
+  background: #6f42c1;
+  /* Deeper purple */
+}
+
+.badge.unknown {
+  background: #6c757d;
+  /* Darker grey */
+}
+
+/* List Styles */
+.section ul {
+  list-style: none;
+  /* Remove default bullets */
+  padding: 0;
+  /* Remove default padding */
+  margin-top: 10px;
+}
+
+.section ul li {
+  background-color: #f0f8ff;
+  /* Light blue background for list items */
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+  color: #333;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  /* Subtle shadow */
+}
+
+.section ul li::before {
+  content: "\2022";
+  /* Unicode bullet point */
+  color: #3498db;
+  /* Blue bullet */
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+  font-size: 1.2em;
+}
+
+.comments-text {
+  background-color: #fdfdfd;
+  border-left: 4px solid #f0f0f0;
+  padding: 10px 15px;
+  font-style: italic;
+  color: #666;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+  .modal-body-grid {
+    grid-template-columns: 1fr;
+    /* Stack columns on smaller screens */
+    gap: 25px;
+    padding-right: 0;
+    /* Remove padding if not needed for scrollbar */
+  }
+
+  .modal-content {
+    padding: 1.8rem;
+  }
+
+  .left-column,
+  .right-column {
+    gap: 15px;
+  }
+
+  .detail-group {
+    flex-direction: column;
+    /* Stack details vertically on smaller screens */
+    gap: 15px;
+  }
+
+  .detail-item,
+  .finance-details p {
+    min-width: unset;
+    /* Remove min-width to allow full stacking */
+    width: 100%;
+    align-items: flex-start;
+    /* Align text to left when stacked */
+    text-align: left;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-content {
+    padding: 1rem;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    /* Full screen on very small devices */
+  }
+
+  .close-btn {
+    top: 0.5rem;
+    right: 0.8rem;
+    font-size: 1.5rem;
+  }
+
+  .modal-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .section h3 {
+    font-size: 1.1rem;
+  }
+
+  .detail-icon {
+    width: 2.5em;
+    height: 2.5em;
+    font-size: 2.5em;
+  }
+
+  .project-showcase-img {
+    max-height: 150px;
+    /* Even smaller for very small screens */
+  }
+}
