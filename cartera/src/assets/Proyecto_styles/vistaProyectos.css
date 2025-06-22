@@ -1,13 +1,24 @@
+/*
+ * Archivo: vistaProyectos.css o parte de <style scoped> en ProjectList.vue
+ *
+ * Este archivo contiene los estilos para la vista de la lista de proyectos,
+ * incluyendo los estados de carga/error, la cuadrícula de proyectos y las tarjetas individuales,
+ * así como los filtros de búsqueda.
+ */
+
+/* Contenedor principal de la vista de proyectos */
 .projects-container {
-  max-width: 1400px;
-  margin: 0 auto;
+  max-width: 1400px; /* Ancho máximo para la vista en pantallas grandes */
+  margin: 0 auto; /* Centra el contenedor */
+  padding: 1.5rem; /* Espaciado interno para que no se pegue a los bordos de la pantalla */
 }
 
-/* Estados */
+/* --- Estados (Cargando, Error) --- */
 .loading-state {
   text-align: center;
   padding: 3rem;
   color: #555;
+  font-size: 1.1rem;
 }
 
 .loader {
@@ -15,7 +26,7 @@
   height: 50px;
   margin: 0 auto 1rem;
   border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
+  border-top: 4px solid #3498db; /* Color de la animación de carga */
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -24,7 +35,6 @@
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
@@ -32,13 +42,14 @@
 
 .error-state {
   padding: 1.5rem;
-  background: #ffebee;
-  color: #d32f2f;
+  background: #ffebee; /* Fondo rojo claro */
+  color: #d32f2f; /* Texto rojo oscuro */
   border-radius: 8px;
   display: flex;
   align-items: center;
   gap: 1rem;
-  margin: 2rem;
+  margin: 2rem 0; /* Margen superior e inferior para separarlo del contenido */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05); /* Sutil sombra */
 }
 
 .error-icon {
@@ -52,17 +63,82 @@
   justify-content: center;
   font-weight: bold;
   font-size: 1.2rem;
+  flex-shrink: 0; /* Evita que el ícono se encoja */
 }
 
-/* Lista de proyectos */
+/* --- Mensaje de no resultados de filtros --- */
+.no-results {
+  grid-column: 1 / -1; /* Ocupa todas las columnas en la cuadrícula */
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #fef0f0;
+  color: #e74c3c;
+  border-radius: 8px;
+  border: 1px solid #fccdcd;
+  font-size: 1.1em;
+  margin-top: 30px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Sección de Filtros --- */
+.filters-section {
+  display: flex;
+  flex-wrap: wrap; /* Permite que los filtros se apilen en pantallas pequeñas */
+  gap: 1rem; /* Espacio entre los elementos del filtro */
+  margin-bottom: 2rem; /* Margen inferior para separarlo de la cuadrícula de proyectos */
+  padding: 1.5rem;
+  background-color: #f0f4f8; /* Un fondo suave para la sección de filtros */
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.filter-input,
+.filter-select {
+  flex: 1; /* Permite que ocupen el espacio disponible */
+  min-width: 220px; /* Ancho mínimo para cada filtro */
+  padding: 0.8rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #333;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.filter-input::placeholder {
+  color: #888;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+/* Estilo para el select (flecha personalizada) */
+.filter-select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 16px;
+  padding-right: 2.5rem; /* Para hacer espacio para la flecha */
+}
+
+/* --- Cuadrícula de Proyectos --- */
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(320px, 1fr)
+  ); /* Ajustado minmax */
   gap: 1.5rem;
-  padding: 0.5rem;
+  padding: 0; /* Removido padding extra, ya lo tiene el contenedor principal */
 }
 
-/* Tarjeta */
+/* --- Tarjeta de Proyecto Individual --- */
 .project-card {
   background: white;
   border-radius: 10px;
@@ -72,7 +148,7 @@
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  border-left: 5px solid #3498db;
+  border-left: 5px solid #3498db; /* Color de acento a la izquierda */
 }
 
 .project-card:hover {
@@ -80,22 +156,44 @@
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
 }
 
+/* Encabezado de la tarjeta */
 .card-header {
-  padding: 1.5rem;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 1.5rem 1.5rem 0.5rem; /* Ajustado el padding inferior */
+  /* Removido border-bottom, se moverá a project-meta o se eliminará si no es necesario */
 }
 
 .project-title {
-  margin: 0 0 1rem 0;
+  margin: 0; /* Reinicia márgenes por defecto */
   font-size: 1.2rem;
-  line-height: 1.4;
+  font-weight: 600;
+  line-height: 1.3;
+  height: calc(1.3rem * 2); /* Calcula la altura para 2 líneas */
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Trunca a 2 líneas */
+  -webkit-box-orient: vertical;
   color: #2c3e50;
+  margin-bottom: 0.5rem; /* Margen inferior para separar del meta */
 }
 
+/* Contenido principal de la tarjeta (insignias, profesores) */
+.card-content {
+  flex-grow: 1; /* Permite que ocupe el espacio disponible y empuje el footer hacia abajo */
+  padding: 0 1.5rem 1.5rem; /* Padding horizontal y bottom */
+  color: #555;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Contenedor de las insignias */
 .project-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.8rem;
+  margin-bottom: 1.2rem; /* Margen inferior para separar de los profesores */
+  padding-top: 0.5rem; /* Pequeño padding superior para despegarlas del título */
 }
 
 .badge {
@@ -103,32 +201,64 @@
   align-items: center;
   padding: 0.4rem 0.8rem;
   border-radius: 20px;
-  font-size: 0.85rem;
+  font-size: 0.8rem; /* Ajustado el tamaño de fuente */
+  font-weight: 500;
+  white-space: nowrap; /* Evita que el texto de la insignia se rompa */
 }
 
 .badge.theme {
-  background: #e3f2fd;
+  background: #e3f2fd; /* Color de temática */
   color: #1976d2;
 }
 
 .badge.institution {
-  background: #e8f5e9;
+  background: #e8f5e9; /* Color de institución */
   color: #388e3c;
 }
 
-.icon {
+.badge .icon-image,
+.badge .icon {
+  width: 1.1em; /* Ajustado tamaño de iconos/imágenes en badges */
+  height: 1.1em;
   margin-right: 0.4rem;
-  font-size: 0.8rem;
+  object-fit: contain;
+  vertical-align: middle; /* Para alinear con el texto si no es flex */
+  flex-shrink: 0; /* Evita que la imagen se encoja */
 }
 
-/* Pie */
+/* Información de Profesores */
+.project-professors {
+  margin-top: 0.5rem; /* Margen superior respecto al meta */
+  display: flex;
+  align-items: flex-start; /* Alinea el ícono y el texto al inicio verticalmente */
+  gap: 0.5rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+.project-professors .professors-list {
+  flex-grow: 1; /* Permite que ocupe el espacio restante */
+}
+
+.project-professors .icon {
+  width: 1.2em;
+  height: 1.2em;
+  object-fit: contain;
+  font-size: 1.1em;
+  color: #777;
+  flex-shrink: 0;
+}
+
+/* Pie de la tarjeta */
 .card-footer {
   padding: 1rem 1.5rem;
   background: #f5f7fa;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   font-size: 0.9rem;
   color: #7f8c8d;
+  border-top: 1px solid #f0f0f0; /* Borde superior para separarlo del contenido */
 }
 
 .footer-item {
@@ -137,45 +267,127 @@
   gap: 0.5rem;
 }
 
-.footer-item.status {
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-weight: 500;
+.footer-item i {
+  margin-right: 0; /* Ya hay gap, no se necesita margin-right */
+  color: #999;
+  font-size: 1em; /* Asegura que los íconos no sean demasiado grandes */
 }
 
+.footer-item.status {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px; /* Redondeado como un badge */
+  font-weight: 500;
+  text-transform: capitalize; /* Para que el estado luzca mejor (ej. "Postulado") */
+}
+
+/* Colores para los estados de proyecto (estos ya estaban bien) */
 .footer-item.status.approved {
   background-color: #e8f5e9;
   color: #27ae60;
-}
-
+} /* Verde */
 .footer-item.status.submitted {
   background-color: #e3f2fd;
   color: #2980b9;
-}
-
+} /* Azul */
 .footer-item.status.rejected {
   background-color: #ffebee;
   color: #e74c3c;
-}
-
+} /* Rojo */
 .footer-item.status.draft {
   background-color: #fff8e1;
   color: #f39c12;
-}
-
+} /* Naranja */
 .footer-item.status.in-progress {
   background-color: #f3e5f5;
   color: #9b59b6;
-}
-
+} /* Morado */
 .footer-item.status.unknown {
   background-color: #eceff1;
   color: #95a5a6;
+} /* Gris */
+
+/* --- Media Queries para Responsividad --- */
+
+/* Breakpoint para pantallas más anchas (ej. de escritorio medianos a grandes) */
+@media (min-width: 1201px) {
+  .filters-section {
+    justify-content: space-between; /* Distribuye uniformemente los 4 filtros */
+  }
+  .filter-input,
+  .filter-select {
+    flex: 0 0 calc(25% - 0.75rem); /* 4 elementos por fila, considerando el gap */
+    max-width: calc(25% - 0.75rem);
+  }
 }
 
-/* Responsive */
+/* Breakpoint para tablets y escritorios pequeños */
+@media (max-width: 1200px) {
+  .filters-section {
+    flex-direction: row; /* Mantener en fila */
+    justify-content: flex-start; /* Alinear a la izquierda */
+  }
+  .filter-input,
+  .filter-select {
+    flex: 1 1 calc(50% - 0.5rem); /* Dos filtros por fila */
+    max-width: calc(50% - 0.5rem);
+  }
+}
+
+/* Breakpoint para móviles */
 @media (max-width: 768px) {
+  .projects-container {
+    padding: 1rem; /* Menos padding en móviles */
+  }
+  .filters-section {
+    flex-direction: column; /* Apila los filtros verticalmente */
+    padding: 1rem;
+    gap: 10px; /* Menor espacio entre elementos apilados */
+  }
+  .filter-input,
+  .filter-select {
+    width: 100%; /* Ocupa todo el ancho disponible */
+    min-width: unset; /* Reinicia min-width */
+    flex: unset; /* Reinicia flex */
+  }
+
   .projects-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr; /* Una columna en móviles */
+    gap: 1rem; /* Menor espacio entre tarjetas */
+  }
+
+  .project-card {
+    border-left-width: 3px; /* Borde más delgado en móviles */
+  }
+
+  .card-header,
+  .card-content,
+  .card-footer {
+    padding-left: 1rem; /* Ajusta padding para móviles */
+    padding-right: 1rem;
+  }
+
+  .project-title {
+    font-size: 1.1rem;
+  }
+
+  .badge {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  .project-professors,
+  .footer-item {
+    font-size: 0.85rem;
+  }
+}
+
+/* Ajustes para pantallas muy pequeñas si es necesario */
+@media (max-width: 480px) {
+  .error-state {
+    flex-direction: column;
+    text-align: center;
+  }
+  .error-icon {
+    margin-bottom: 0.5rem;
   }
 }

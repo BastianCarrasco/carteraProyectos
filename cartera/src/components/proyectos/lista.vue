@@ -12,9 +12,37 @@
       <p>{{ error }}</p>
     </div>
 
-    <!-- Lista de proyectos -->
+    <!-- Sección de Filtros -->
+    <div v-if="!loading && !error" class="filters-section">
+      <input type="text" v-model="searchTerm" placeholder="Buscar por nombre de proyecto..." class="filter-input" />
+
+      <select v-model="selectedThematic" class="filter-select">
+        <option value="">Todas las temáticas</option>
+        <option v-for="thematic in uniqueThematics" :key="thematic" :value="thematic">
+          {{ thematic }}
+        </option>
+      </select>
+
+      <!-- NUEVO FILTRO: Institución -->
+      <select v-model="selectedInstitution" class="filter-select">
+        <option value="">Todas las instituciones</option>
+        <option v-for="institution in uniqueInstitutions" :key="institution" :value="institution">
+          {{ institution }}
+        </option>
+      </select>
+
+      <!-- NUEVO FILTRO: Estatus -->
+      <select v-model="selectedStatus" class="filter-select">
+        <option value="">Todos los estados</option>
+        <option v-for="status in uniqueStatuses" :key="status" :value="status">
+          {{ status }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Lista de proyectos (Ahora usa `filteredProjects`) -->
     <div v-if="!loading && !error" class="projects-grid">
-      <article v-for="proyecto in proyectos" :key="proyecto.id_proyecto" class="project-card"
+      <article v-for="proyecto in filteredProjects" :key="proyecto.id_proyecto" class="project-card"
         @click="openModal(proyecto)">
         <header class="card-header">
           <h3 class="project-title" :title="proyecto.nombre">{{ proyecto.nombre }}.</h3>
@@ -22,7 +50,6 @@
 
         <!-- Contenido principal de la tarjeta -->
         <div class="card-content">
-          <!-- MOVIMIENTO AQUÍ: Las insignias ahora están dentro de card-content -->
           <div class="project-meta">
             <span class="badge theme">
               <img v-if="getThematicImage(proyecto.tematica)" :src="getThematicImage(proyecto.tematica)"
@@ -37,7 +64,6 @@
               {{ proyecto.institucion || 'Sin institución' }}
             </span>
           </div>
-          <!-- FIN DEL MOVIMIENTO -->
 
           <p v-if="proyecto.profesores && proyecto.profesores.length > 0" class="project-professors">
             <img :src="professorIcon" alt="Ícono de Profesor" class="icon" />
@@ -51,7 +77,6 @@
               Sin académicos asignados
             </span>
           </p>
-          <!-- Puedes añadir más campos aquí si es necesario -->
         </div>
 
         <footer class="card-footer">
@@ -64,6 +89,11 @@
           </span>
         </footer>
       </article>
+
+      <!-- Mensaje si no hay proyectos que coincidan con los filtros -->
+      <div v-if="filteredProjects.length === 0 && !loading && !error" class="no-results">
+        <p>No se encontraron proyectos que coincidan con los filtros aplicados.</p>
+      </div>
     </div>
 
     <!-- El modal, pasando las funciones de imagen como props -->
@@ -73,8 +103,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import ProjectModal from '../proyectos/ProjectModal.vue';
+
 import '../../assets/Proyecto_styles/vistaProyectos.css';
 import professorIcon from '../../assets/iconos/profesor.png';
 
@@ -84,6 +115,7 @@ import litioIcon from '../../assets/tematicas/Litio.png';
 import luxicon from '../../assets/tematicas/luz.png';
 import miner from '../../assets/tematicas/miner.png'
 import energyIcon from '../../assets/tematicas/energy.png';
+import biotech from '../../assets/tematicas/bio.png';
 
 // Importa SÓLO las imágenes de instituciones/fondos que tienes por el momento
 import corfoLogo from '../../assets/fondos/corfo.png';
@@ -99,6 +131,88 @@ const props = defineProps({
 
 const modalProject = ref(null);
 
+// Variables de estado para los filtros
+const searchTerm = ref('');
+const selectedThematic = ref('');
+const selectedInstitution = ref(''); // Nuevo filtro
+const selectedStatus = ref('');     // Nuevo filtro
+
+// Propiedades computadas para obtener opciones únicas para los selects
+const uniqueThematics = computed(() => {
+  if (!props.proyectos) return [];
+  const thematics = new Set();
+  props.proyectos.forEach(p => {
+    if (p.tematica) {
+      thematics.add(p.tematica);
+    }
+  });
+  return [...thematics].sort();
+});
+
+const uniqueInstitutions = computed(() => { // Nueva propiedad computada
+  if (!props.proyectos) return [];
+  const institutions = new Set();
+  props.proyectos.forEach(p => {
+    if (p.institucion) {
+      institutions.add(p.institucion);
+    }
+  });
+  return [...institutions].sort();
+});
+
+const uniqueStatuses = computed(() => { // Nueva propiedad computada
+  if (!props.proyectos) return [];
+  const statuses = new Set();
+  props.proyectos.forEach(p => {
+    if (p.estatus) {
+      statuses.add(p.estatus);
+    }
+  });
+  return [...statuses].sort((a, b) => {
+    // Ordenar estados de una manera lógica (ej. Postulado, En Proceso, Aprobado, Rechazado, Perfil)
+    const order = ['postulado', 'adjudicado', 'aprobado', 'rechazado', 'perfil'];
+    return order.indexOf(a.toLowerCase()) - order.indexOf(b.toLowerCase());
+  });
+});
+
+
+// Propiedad computada para filtrar proyectos
+const filteredProjects = computed(() => {
+  let projectsToFilter = props.proyectos;
+
+  // 1. Filtrar por término de búsqueda (nombre del proyecto)
+  if (searchTerm.value) {
+    const lowerCaseSearchTerm = searchTerm.value.toLowerCase();
+    projectsToFilter = projectsToFilter.filter(proyecto =>
+      proyecto.nombre.toLowerCase().includes(lowerCaseSearchTerm)
+    );
+  }
+
+  // 2. Filtrar por temática seleccionada
+  if (selectedThematic.value) {
+    projectsToFilter = projectsToFilter.filter(proyecto =>
+      proyecto.tematica && proyecto.tematica.toLowerCase() === selectedThematic.value.toLowerCase()
+    );
+  }
+
+  // 3. Filtrar por institución seleccionada (Nuevo)
+  if (selectedInstitution.value) {
+    projectsToFilter = projectsToFilter.filter(proyecto =>
+      proyecto.institucion && proyecto.institucion.toLowerCase() === selectedInstitution.value.toLowerCase()
+    );
+  }
+
+  // 4. Filtrar por estatus seleccionado (Nuevo)
+  if (selectedStatus.value) {
+    projectsToFilter = projectsToFilter.filter(proyecto =>
+      proyecto.estatus && proyecto.estatus.toLowerCase() === selectedStatus.value.toLowerCase()
+    );
+  }
+
+  return projectsToFilter;
+});
+
+
 // Mapa de imágenes para temáticas
 const thematicImages = {
   'hidrogeno': hidrogenoIcon,
@@ -107,6 +221,8 @@ const thematicImages = {
   'contaminación lumínica': luxicon,
   'minería': miner,
   'almacenamiento energía': energyIcon,
+  'biotecnología': biotech,
+  // Asegúrate de que las claves aquí coincidan con las temáticas exactas que vienen de tu API
 };
 
 // Mapa de imágenes para instituciones
@@ -115,6 +231,7 @@ const institutionImages = {
   'sqm': sqm,
   'codesser': codelogo,
   'anid': anidlogo,
+  // Asegúrate de que las claves aquí coincidan con los nombres exactos que vienen de tu API
 };
 
 const openModal = (proyecto) => {
@@ -131,6 +248,7 @@ const formatShortDate = (dateString) => {
   return new Date(dateString).toLocaleDateString('es-CL', options);
 };
 
+// Dentro de tu <script setup>
 const getStatusClass = (status) => {
   if (!status) return 'unknown';
   const statusMap = {
@@ -139,6 +257,7 @@ const getStatusClass = (status) => {
     'rechazado': 'rejected',
     'perfil': 'draft',
     'en proceso': 'in-progress',
+    'adjudicado': 'adjudicado', // AÑADIDO: Mapea el estado 'adjudicado' a la clase 'adjudicado'
   };
   return statusMap[status.toLowerCase()] || 'unknown';
 };
@@ -156,25 +275,14 @@ const getInstitutionImage = (institution) => {
 };
 </script>
 <style scoped>
-/*
-   IMPORTANTE: Se asume que estos estilos son un complemento a los de
-   '../../assets/Proyecto_styles/vistaProyectos.css' o son los únicos
-   estilos específicos de este componente. Si el CSS del modal fue movido
-   completamente al modal, entonces aquí solo debería haber estilos
-   para la lista de proyectos en sí.
-*/
-
-/* Tus estilos de project-card y related elements deberían estar aquí o en el CSS importado */
-
+/* Estilos existentes de ProjectCard, ajustados si es necesario */
 .project-card {
   display: flex;
   flex-direction: column;
-  /* Añade aquí estilos base de la tarjeta si no están en vistaProyectos.css */
   background-color: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  /* Asegura que el border-radius se aplique bien */
   cursor: pointer;
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
@@ -184,19 +292,14 @@ const getInstitutionImage = (institution) => {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
-
 .card-header {
   padding: 15px 15px 0;
-  /* Ajusta el padding si el título está pegado al borde superior */
   margin-bottom: 0;
-  /* Ya no hay margen inferior aquí, lo manejaremos en project-meta */
 }
 
-/* Estilos para el título del proyecto (truncado a 2 líneas) */
 .project-title {
   font-size: 1.2em;
   font-weight: 600;
-  /* Dale un poco más de peso */
   line-height: 1.3;
   height: calc(1.3em * 2);
   overflow: hidden;
@@ -210,60 +313,43 @@ const getInstitutionImage = (institution) => {
 .card-content {
   flex-grow: 1;
   padding: 0 15px 15px;
-  /* Ajusta este padding si el badge quedaba muy pegado arriba */
   color: #555;
   font-size: 0.9em;
   line-height: 1.4;
   display: flex;
-  /* Para flexionar las insignias y los profesores si es necesario */
   flex-direction: column;
-  /* Organizar verticalmente los elementos internos */
 }
 
-/* Nuevo estilo para el contenedor de las insignias */
 .project-meta {
   display: flex;
-  /* Para que las insignias se coloquen una al lado de la otra */
   flex-wrap: wrap;
-  /* Permite que las insignias se envuelvan a la siguiente línea si no hay espacio */
   gap: 8px;
-  /* Espacio entre las insignias */
   margin-bottom: 15px;
-  /* Margen inferior para separarlo de los profesores */
   padding-top: 5px;
-  /* Pequeño padding si lo necesitas para despegarlos del título */
 }
 
 .badge {
   display: inline-flex;
-  /* Usar inline-flex para alinear contenido dentro del badge */
   align-items: center;
   padding: 5px 10px;
   border-radius: 20px;
   font-size: 0.85em;
   font-weight: 500;
   white-space: nowrap;
-  /* Evita que el texto de la insignia se rompa */
 }
 
 .badge.theme {
   background-color: #e0f7fa;
-  /* Un color suave para temáticas */
   color: #00796b;
-  /* Color de texto para temáticas */
 }
 
 .badge.institution {
   background-color: #e3f2fd;
-  /* Un color suave para instituciones */
   color: #1976d2;
-  /* Color de texto para instituciones */
 }
-
 
 .project-professors {
   margin-top: 5px;
-  /* Mantenemos este margen superior respecto a lo que tiene encima */
   display: flex;
   align-items: flex-start;
   gap: 5px;
@@ -271,7 +357,6 @@ const getInstitutionImage = (institution) => {
   line-height: 1.4;
 }
 
-/* Contenedor para la lista de profesores para manejar el wrap y la altura */
 .project-professors .professors-list {
   flex-grow: 1;
 }
@@ -307,46 +392,40 @@ const getInstitutionImage = (institution) => {
   font-weight: 600;
 }
 
-/* Estilos para los estados del proyecto */
+/* Estilos para los estados del proyecto (ya existían) */
 .footer-item.status.approved {
   background-color: #e6ffe6;
   color: #28a745;
 }
 
-/* Verde */
 .footer-item.status.submitted {
   background-color: #fff3cd;
   color: #ffc107;
 }
 
-/* Amarillo */
 .footer-item.status.rejected {
   background-color: #f8d7da;
   color: #dc3545;
 }
 
-/* Rojo */
 .footer-item.status.draft {
   background-color: #e2e3e5;
   color: #6c757d;
 }
 
-/* Gris */
 .footer-item.status.in-progress {
   background-color: #d1ecf1;
   color: #17a2b8;
 }
 
-/* Azul claro */
 .footer-item.status.unknown {
-  background-color: #f2f2f2;
+  background-color: #aaaaaa;
   color: #999;
 }
 
-
 .badge .icon-image {
-  width: 1.2em;
-  height: 1.2em;
+  width: 2em;
+  height: 2em;
   vertical-align: middle;
   margin-right: 5px;
   object-fit: contain;
@@ -354,5 +433,190 @@ const getInstitutionImage = (institution) => {
 
 .badge .icon {
   margin-right: 5px;
+}
+
+/* --- Nuevos estilos para los filtros --- */
+.filters-section {
+  display: flex;
+  flex-wrap: wrap;
+  /* Permite que los filtros se apilen en pantallas pequeñas */
+  gap: 15px;
+  /* Espacio entre los elementos del filtro */
+  margin-bottom: 30px;
+  /* Margen inferior para separarlo de la cuadrícula de proyectos */
+  padding: 15px;
+  background-color: #f0f4f8;
+  /* Un fondo suave para la sección de filtros */
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.filter-input,
+.filter-select {
+  flex: 1;
+  /* Permite que ocupen el espacio disponible */
+  min-width: 200px;
+  /* Ancho mínimo para cada filtro */
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1em;
+  color: #333;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.filter-input::placeholder {
+  color: #888;
+}
+
+.filter-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+.filter-select {
+  /* Añadir una flecha personalizada si no te gusta la nativa */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url('data:image/svg+xml;charset=UTF-8,%3csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 24 24%27 fill=%27none%27 stroke=%27currentColor%27 stroke-width=%272%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27%3e%3cpolyline points=%276 9 12 15 18 9%27%3e%3c/polyline%3e%3c/svg%3e');
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 16px;
+  padding-right: 40px;
+  /* Para hacer espacio para la flecha */
+}
+
+/* Mensaje de no resultados */
+.no-results {
+  grid-column: 1 / -1;
+  /* Ocupa todas las columnas en la cuadrícula */
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #fef0f0;
+  color: #e74c3c;
+  border-radius: 8px;
+  border: 1px solid #fccdcd;
+  font-size: 1.1em;
+  margin-top: 30px;
+}
+
+/* Media Query para pantallas más pequeñas (opcional, pero útil) */
+@media (max-width: 900px) {
+
+  /* A partir de 900px, los filtros pueden empezar a apilarse para no apretarse */
+  .filters-section {
+    flex-direction: column;
+  }
+
+  .filter-input,
+  .filter-select {
+    min-width: unset;
+    width: 100%;
+  }
+}
+
+/* Si quieres que se apilen antes de los 600px, ajusta el breakpoint. */
+/* Por ejemplo, para que pasen de 4 a 2 por fila, y luego a 1 por fila */
+@media (max-width: 1200px) {
+
+  .filter-input,
+  .filter-select {
+    flex: 1 1 calc(50% - 15px);
+    /* Dos por fila con espacio entre ellos */
+  }
+}
+
+.card-footer {
+  padding: 1rem 1.5rem;
+  background: #f5f7fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  border-top: 1px solid #f0f0f0;
+  /* Borde superior para separarlo del contenido */
+}
+
+.footer-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.footer-item i {
+  margin-right: 0;
+  /* Ya hay gap, no se necesita margin-right */
+  color: #999;
+  font-size: 1em;
+  /* Asegura que los íconos no sean demasiado grandes */
+}
+
+.footer-item.status {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  /* Redondeado como un badge */
+  font-weight: 500;
+  text-transform: capitalize;
+  /* Para que el estado luzca mejor (ej. "Postulado") */
+}
+
+/* Colores para los estados de proyecto */
+.footer-item.status.approved,
+.footer-item.status.adjudicado
+
+/* AÑADIDO: Incluye .adjudicado aquí */
+  {
+  background-color: #e8f5e9;
+  /* Verde claro de fondo */
+  color: #27ae60;
+  /* Verde oscuro de texto */
+}
+
+.footer-item.status.submitted {
+  background-color: #e3f2fd;
+  color: #2980b9;
+}
+
+/* Azul */
+.footer-item.status.rejected {
+  background-color: #ffebee;
+  color: #e74c3c;
+}
+
+/* Rojo */
+.footer-item.status.draft {
+  background-color: #fff8e1;
+  color: #f39c12;
+}
+
+/* Naranja */
+.footer-item.status.in-progress {
+  background-color: #f3e5f5;
+  color: #9b59b6;
+}
+
+/* Morado */
+.footer-item.status.unknown {
+  background-color: #eceff1;
+  color: #95a5a6;
+}
+
+/* Gris */
+
+@media (max-width: 768px) {
+
+  .filter-input,
+  .filter-select {
+    flex: 1 1 100%;
+    /* Uno por fila */
+  }
+
+  .filters-section {
+    flex-direction: column;
+  }
 }
 </style>
