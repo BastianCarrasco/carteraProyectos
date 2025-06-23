@@ -2,9 +2,14 @@
   <v-container fluid class="pa-4">
     <h1 class="my-4 text-h4">Listado de Proyectos</h1>
 
-    <!-- Create Project Button -->
+    <!-- Action Buttons Row -->
     <v-row class="mb-4">
-      <v-col cols="12" class="text-right">
+      <v-col cols="12" class="d-flex justify-space-between align-center">
+        <v-btn color="secondary" @click="openLookupManagementModal">
+          <v-icon left>mdi-pencil-box-multiple-outline</v-icon>
+          Editar Listas
+        </v-btn>
+        <v-spacer></v-spacer>
         <v-btn color="primary" @click="openCreateProjectModal">
           <v-icon left>mdi-plus</v-icon>
           Crear Proyecto
@@ -272,12 +277,20 @@
     <!-- Create Project Modal (New) -->
     <CreateProjectModal ref="createProjectModalRef" @project-created="handleProjectCreated"
       @close-modal="closeCreateProjectModal" />
+
+    <!-- New Lookup Management Modal -->
+    <LookupManagementModal ref="lookupManagementModalRef" :unidades-lookup="unidadesLookup"
+      :tematicas-lookup="tematicasLookup" :estatus-lookup="estatusLookup"
+      :tipo-convocatorias-lookup="tipoConvocatoriasLookup" :instituciones-lookup="institucionesLookup"
+      :apoyos-lookup="apoyosLookup" :tags-lookup="tagsLookup" @data-updated="handleLookupDataUpdated"
+      @close-modal="closeLookupManagementModal" />
   </v-container>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, nextTick, watch } from 'vue';
 import CreateProjectModal from '@/components/CreateProjectModal.vue';
+import LookupManagementModal from '@/components/LookupManagementModal.vue'; // Import the new modal
 import '../assets/Proyecto_styles/exel2.css';
 
 // URLs
@@ -970,6 +983,29 @@ const handleProjectCreated = () => {
 
 const closeCreateProjectModal = () => {
   console.log('Create Project Modal closed.');
+};
+
+// --- New Lookup Management Modal Logic ---
+const lookupManagementModalRef = ref(null);
+
+const openLookupManagementModal = () => {
+  if (lookupManagementModalRef.value) {
+    lookupManagementModalRef.value.openDialog();
+  }
+};
+
+const handleLookupDataUpdated = (lookupType) => {
+  // When a lookup data is updated in the sub-modal, refetch ALL lookup data
+  // to ensure all dropdowns/selects in the main table are up-to-date.
+  console.log(`Lookup data for ${lookupType} updated, refetching all lookup data.`);
+  fetchData(); // Re-fetch all data including lookup tables
+};
+
+const closeLookupManagementModal = () => {
+  console.log('Lookup Management Modal closed.');
+  // Optionally, you might want to force a refetch here as well,
+  // in case the user closed the modal without making changes but you want to be sure.
+  // fetchData();
 };
 </script>
 <style scoped>
