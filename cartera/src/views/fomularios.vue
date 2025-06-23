@@ -393,9 +393,6 @@ export default {
   line-height: 1.4;
 }
 
-.answer-section {
-  /* No display: flex/grid, simplemente un bloque debajo */
-}
 
 .answer-label {
   font-weight: bold;
