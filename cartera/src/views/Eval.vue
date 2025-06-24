@@ -7,10 +7,10 @@
       <div class="filter-group">
         <div class="filter-item">
           <label for="tipoFondo">Tipo de Fondo:</label>
-          <select id="tipoFondo" v-model="filters.tipoFondo" @change="updateTipoOptions">
+          <select id="tipoFondo" v-model="filters.tipoFondo">
             <option :value="null">Todos</option>
-            <option v-for="fondo in tiposFondoUnicos" :key="fondo" :value="fondo">
-              {{ fondo }}
+            <option v-for="fondoType in tiposFondoUnicos" :key="fondoType" :value="fondoType">
+              {{ fondoType }}
             </option>
           </select>
         </div>
@@ -84,10 +84,13 @@
             <tbody>
               <template v-for="fondo in filteredFondos" :key="fondo.id_fondo">
                 <tr class="fondo-row" @click="toggleDetails(fondo.id_fondo)"
-                  :class="{ 'is-expanded': expandedFondoId === fondo.id_fondo }">
+                  :class="{ 'is-expanded': expandedFondoId === fondo.id_fondo }"
+                  role="button"
+                  tabindex="0"
+                  :aria-expanded="expandedFondoId === fondo.id_fondo ? 'true' : 'false'">
                   <td class="expand-toggle">
-                    <!-- Simplificado para siempre mostrar fa-chevron-down -->
-                    <i class="fas fa-chevron-down"></i>
+                    <i class="fas fa-chevron-down"
+                       :style="{ transform: expandedFondoId === fondo.id_fondo ? 'rotate(180deg)' : 'rotate(0deg)' }"></i>
                   </td>
                   <td>
                     <div class="fondo-name-cell">
@@ -116,7 +119,7 @@
                   </td>
                 </tr>
                 <tr v-if="expandedFondoId === fondo.id_fondo" class="fondo-details-row">
-                  <td :colspan="getTableColspan()">
+                  <td :colspan="getTableColspan()" :aria-hidden="expandedFondoId !== fondo.id_fondo">
                     <div class="details-panel">
                       <div class="detail-section">
                         <h4><i class="fas fa-bullseye icon"></i> Objetivo</h4>
@@ -176,26 +179,6 @@ import anidLogo from '../assets/fondos/anid.jpg';
 import pucvLogo from '../assets/fondos/PUCV_Escudo2016.svg';
 // Si tienes más logos, impórtalos aquí
 
-// Asegúrate de que FontAwesome esté disponible globalmente en tu proyecto (e.g., en main.js)
-// o de importarlo y configurarlo aquí si no lo está.
-// La importación @import url(...) en el CSS scoped debería ser suficiente,
-// pero si aún tienes problemas, la configuración global en main.js es lo más robusto.
-/*
-import { library } from '@fortawesome/fontawesome-svg-core';
-import {
-  faRedo, faSearch, faSpinner, faInfoCircle, faCreditCardAlt, faCalendarAlt,
-  faPlayCircle, faFlagCheckered, faBullseye, faClipboardList, faExclamationTriangle,
-  faClock, faCalendarDay, faCalendarTimes, faFlask, faCube, faExclamationCircle,
-  faChevronDown, faChevronUp // Asegúrate de que faChevronDown y faChevronUp estén aquí si los usas
-} from '@fortawesome/free-solid-svg-icons';
-library.add(
-  faRedo, faSearch, faSpinner, faInfoCircle, faCreditCardAlt, faCalendarAlt,
-  faPlayCircle, faFlagCheckered, faBullseye, faClipboardList, faExclamationTriangle,
-  faClock, faCalendarDay, faCalendarTimes, faFlask, faCube, faExclamationCircle,
-  faChevronDown, faChevronUp
-);
-*/
-
 export default {
   data() {
     return {
@@ -204,22 +187,24 @@ export default {
       error: null,
       searchText: '',
       filters: {
-        tipoFondo: null,
-        tipo: null, // Mantener si se piensa usar
+        tipoFondo: null, // This will now hold string values like 'ANID', 'CORFO'
         trl: null,
         vigente: null,
       },
-      tipoNames: {
-        1: 'Innovación Productiva',
-        4: 'Investigación y Desarrollo',
-        5: 'Investigación Académica',
-        // Agrega más según tus datos
+      // Mapeo de IDs de tipo a nombres de fondo
+      tipoFondoMap: {
+        1: 'CORFO', // Ejemplo: si tipo 1 en backend es CORFO
+        4: 'ANID',  // Ejemplo: si tipo 4 en backend es ANID
+        // AÑADE AQUÍ TODOS LOS MAPEOS NECESARIOS PARA TUS ID DE TIPO
+        // BASÁNDOTE EN CÓMO TU BACKEND ASIGNA ESOS NÚMEROS.
+        // Si tienes otros números de `tipo` en tu backend, agrégalos aquí.
+        // Por ejemplo: 5: 'Internas PUCV', etc.
       },
       expandedFondoId: null, // Track the currently expanded fondo's ID
-      // Mapeo de tipos de fondo a sus logos importados
+      // Mapeo de tipos de fondo a sus logos importados (usa los mismos nombres que en tipoFondoMap)
       fondoLogos: {
         'CORFO': corfoLogo,
-        'SQM': sqmLogo, // Asegúrate de que 'SQM' sea un valor real en tu data
+        'SQM': sqmLogo, // Asegúrate de que 'SQM' sea un valor real en tu data (ej. si tienes tipo 2 que mapee a SQM)
         'ANID': anidLogo,
         'Internas PUCV': pucvLogo,
         // Agrega más mapeos aquí: 'Otro Tipo de Fondo': otroLogoImportado,
@@ -238,7 +223,7 @@ export default {
 
         const matchesFilters =
           (this.filters.tipoFondo === null ||
-            fondo['tipo de fondo'] === this.filters.tipoFondo) &&
+            fondo['tipo de fondo'] === this.filters.tipoFondo) && // Utiliza la nueva propiedad 'tipo de fondo'
           (this.filters.trl === null || fondo.trl === this.filters.trl) &&
           (this.filters.vigente === null || isVigenteFondo === this.filters.vigente);
 
@@ -246,6 +231,7 @@ export default {
       });
     },
     tiposFondoUnicos() {
+      // Ahora se obtiene de la propiedad 'tipo de fondo' que creamos en fetchFondos
       return [...new Set(this.fondos.map((f) => f['tipo de fondo']).filter(Boolean))].sort();
     },
   },
@@ -255,18 +241,31 @@ export default {
       this.error = null;
       try {
         const response = await fetch(
-          'https://kth2025backend-production.up.railway.app/fondos'
+          'https://elysia-bunbackend-production.up.railway.app/fondos'
         );
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
         }
         const data = await response.json();
-        this.fondos = data.data || [];
-        this.fondos.forEach((fondo) => {
+        // --- INICIO DE CAMBIOS CRÍTICOS ---
+        // Mapear los datos para agregar la propiedad 'tipo de fondo'
+        this.fondos = (data.data || []).map(fondo => {
+          if (fondo.tipo !== undefined && this.tipoFondoMap[fondo.tipo]) {
+            // Asigna la cadena de texto basada en el mapeo
+            fondo['tipo de fondo'] = this.tipoFondoMap[fondo.tipo];
+          } else {
+            // Si no hay mapeo, usa un valor predeterminado o nulo
+            fondo['tipo de fondo'] = 'Desconocido'; // O null, lo que prefieras
+          }
+
+          // Asegúrate de que TRL sea un número
           if (fondo.trl) {
             fondo.trl = parseInt(fondo.trl, 10);
           }
+          return fondo;
         });
+        // --- FIN DE CAMBIOS CRÍTICOS ---
+
       } catch (error) {
         console.error('Error fetching fondos:', error);
         this.error = error.message;
@@ -278,6 +277,7 @@ export default {
       if (!dateString) return 'No especificado';
       try {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        // Asegúrate de que la fecha es parseable. Si viene en formato ISO, `new Date()` la maneja.
         return new Date(dateString).toLocaleDateString('es-CL', options);
       } catch (e) {
         console.warn('Invalid date string:', dateString, e);
@@ -289,26 +289,33 @@ export default {
       const hoy = new Date();
       const inicio = new Date(fondo.inicio);
       const cierre = new Date(fondo.cierre);
-      cierre.setHours(23, 59, 59, 999); // Adjust cierre date to end of day
+      // Ajustar la fecha de cierre al final del día para inclusión
+      cierre.setHours(23, 59, 59, 999);
       return hoy >= inicio && hoy <= cierre;
     },
     formatReqs(reqs) {
       if (!reqs) return [];
+      // Mejorar la división para manejar diferentes formatos de lista
       return reqs
-        .split(/[\r\n]+|\s*-\s*|\s*\d+\.\s*/)
+        .split(/[\r\n]+|\s*-\s*|\s*\d+\.\s*|;\s*/) // Dividir por salto de línea, guion, numeración o punto y coma
         .map((item) => item.trim())
-        .filter((item) => item.length > 0 && item !== '-');
+        .filter((item) => item.length > 0 && item !== '-'); // Eliminar vacíos y guiones solos
     },
-    getTipoName(tipo) {
-      return this.tipoNames[tipo] || `Tipo ${tipo}`;
-    },
+    // Este método ya no es necesario si 'tipo de fondo' es una cadena
+    // getTipoName(tipo) {
+    //   return this.tipoNames[tipo] || `Tipo ${tipo}`;
+    // },
     getFondoBadgeClass(tipoFondo) {
+      // Asegúrate de que los nombres aquí coincidan con los del tipoFondoMap
       return {
         'fondo-badge': true,
         'anid-badge': tipoFondo === 'ANID',
         'corfo-badge': tipoFondo === 'CORFO',
         'pucv-badge': tipoFondo === 'Internas PUCV',
-        // Add more types as needed
+        // Si tienes 'SQM' y quieres un estilo específico, añádelo aquí:
+        'sqm-badge': tipoFondo === 'SQM',
+        // Clase por defecto si no coincide con ninguna
+        'default-badge': !['ANID', 'CORFO', 'Internas PUCV', 'SQM'].includes(tipoFondo),
       };
     },
     getStatusBadgeClass(isVigente) {
@@ -322,13 +329,14 @@ export default {
       // Devuelve la URL del logo o null si no se encuentra
       return this.fondoLogos[tipoFondo] || null;
     },
-    updateTipoOptions() {
-      this.filters.tipo = null;
-    },
+    // updateTipoOptions ya no es necesario si no hay filtros `tipo` numéricos
+    // updateTipoOptions() {
+    //   this.filters.tipo = null;
+    // },
     resetFilters() {
       this.filters = {
         tipoFondo: null,
-        tipo: null,
+        // tipo: null, // Eliminar si no se usa
         trl: null,
         vigente: null,
       };
@@ -336,13 +344,13 @@ export default {
     },
     toggleDetails(fondoId) {
       if (this.expandedFondoId === fondoId) {
-        this.expandedFondoId = null; // Collapse if already expanded
+        this.expandedFondoId = null; // Colapsar si ya está expandido
       } else {
-        this.expandedFondoId = fondoId; // Expand clicked row
+        this.expandedFondoId = fondoId; // Expandir la fila clickeada
       }
     },
     getTableColspan() {
-      return 7; // Number of columns in the table header
+      return 7; // Número de columnas en el encabezado de la tabla
     },
   },
   mounted() {
@@ -673,10 +681,7 @@ select:focus,
 }
 
 .fondo-row.is-expanded .expand-toggle i {
-  /* No extra rotation, as fa-chevron-down will simply point down.
-     If you want it to rotate up when expanded, you can add:
-     transform: rotate(180deg);
-  */
+  transform: rotate(180deg);
 }
 
 /* Table Cell Content Styles */
@@ -740,6 +745,19 @@ select:focus,
   background-color: #3498db;
   /* Blue */
 }
+
+/* New badge for SQM if you map it */
+.sqm-badge {
+  background-color: #2c3e50; /* Darker color for SQM */
+  color: white;
+}
+
+/* Default badge for unknown types */
+.default-badge {
+  background-color: #95a5a6; /* Grey */
+  color: white;
+}
+
 
 /* Status Badge (Vigente/Finalizado) */
 .status-badge {
@@ -967,11 +985,12 @@ select:focus,
 
   /* Hide less critical columns on small screens */
   /* You can uncomment these to hide columns if they don't fit */
+  /*
   .fondos-table thead th.header-trl-col,
   .fondos-table tbody td:nth-child(4) {
-    /* TRL Column */
     display: none;
   }
+  */
 
   /* Keep other columns but make their content wrap if needed */
   .fondos-table th.header-finance-col,
