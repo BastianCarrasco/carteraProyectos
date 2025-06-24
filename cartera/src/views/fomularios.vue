@@ -184,16 +184,37 @@ export default {
           fetch(academicosUrl),
           fetch(unidadesUrl),
           fetch(cuestionariosUrl)
-        ])
+        ]);
+
+        // Log the responses before parsing JSON
+        console.log('Raw academicos response:', academicosRes);
 
         this.respuestas = await respuestasRes.json();
-        this.academicos = await academicosRes.json();
+
+        // IMPORTANT: Add error handling for JSON parsing
+        const academicosData = await academicosRes.json();
+        console.log('Parsed academicos data:', academicosData);
+
+        // Check if it's an array before assigning
+        if (Array.isArray(academicosData)) {
+          this.academicos = academicosData;
+        } else {
+          console.error('Academicos API did not return an array:', academicosData);
+          this.academicos = []; // Ensure it remains an array
+        }
+
+
         this.unidades = await unidadesRes.json();
         this.preguntas = await preguntasRes.json();
 
       } catch (e) {
-        console.error('Error cargando datos:', e)
+        console.error('Error cargando datos:', e);
         alert('Error al cargar los datos. Por favor, intente más tarde.');
+        // Ensure arrays are cleared or set to default empty arrays on error
+        this.respuestas = [];
+        this.academicos = [];
+        this.unidades = [];
+        this.preguntas = [];
       }
     },
     seleccionarRespuesta(respuesta) {
