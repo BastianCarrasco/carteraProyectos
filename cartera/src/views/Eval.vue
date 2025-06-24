@@ -33,13 +33,13 @@
         </div>
 
         <button @click="resetFilters" class="reset-btn">
-          <i class="fas fa-redo"></i> Reiniciar Filtros
+         Reiniciar Filtros
         </button>
       </div>
 
       <div class="search-box">
         <input v-model="searchText" placeholder="Buscar por nombre o objetivo..." class="search-input" />
-        <i class="fas fa-search search-icon"></i>
+        <!-- <i class="fas fa-search search-icon"></i> -->
       </div>
     </div>
 
@@ -82,15 +82,15 @@
               </tr>
             </thead>
             <tbody>
-              <template v-for="fondo in filteredFondos" :key="fondo.id_fondo">
-                <tr class="fondo-row" @click="toggleDetails(fondo.id_fondo)"
-                  :class="{ 'is-expanded': expandedFondoId === fondo.id_fondo }"
+              <template v-for="fondo in filteredFondos" :key="fondo.id">
+                <tr class="fondo-row" @click="toggleDetails(fondo.id)"
+                  :class="{ 'is-expanded': expandedFondoId === fondo.id }"
                   role="button"
                   tabindex="0"
-                  :aria-expanded="expandedFondoId === fondo.id_fondo ? 'true' : 'false'">
+                  :aria-expanded="expandedFondoId === fondo.id ? 'true' : 'false'">
                   <td class="expand-toggle">
-                    <i class="fas fa-chevron-down"
-                       :style="{ transform: expandedFondoId === fondo.id_fondo ? 'rotate(180deg)' : 'rotate(0deg)' }"></i>
+                    <!-- <i class="fas fa-chevron-down"
+                       :style="{ transform: expandedFondoId === fondo.id ? 'rotate(180deg)' : 'rotate(0deg)' }"></i> -->
                   </td>
                   <td>
                     <div class="fondo-name-cell">
@@ -118,8 +118,8 @@
                     </span>
                   </td>
                 </tr>
-                <tr v-if="expandedFondoId === fondo.id_fondo" class="fondo-details-row">
-                  <td :colspan="getTableColspan()" :aria-hidden="expandedFondoId !== fondo.id_fondo">
+                <tr v-if="expandedFondoId === fondo.id" class="fondo-details-row">
+                  <td :colspan="getTableColspan()" :aria-hidden="expandedFondoId !== fondo.id">
                     <div class="details-panel">
                       <div class="detail-section">
                         <h4><i class="fas fa-bullseye icon"></i> Objetivo</h4>
@@ -193,21 +193,20 @@ export default {
       },
       // Mapeo de IDs de tipo a nombres de fondo
       tipoFondoMap: {
-        1: 'CORFO', // Ejemplo: si tipo 1 en backend es CORFO
-        4: 'ANID',  // Ejemplo: si tipo 4 en backend es ANID
-        // AÑADE AQUÍ TODOS LOS MAPEOS NECESARIOS PARA TUS ID DE TIPO
-        // BASÁNDOTE EN CÓMO TU BACKEND ASIGNA ESOS NÚMEROS.
-        // Si tienes otros números de `tipo` en tu backend, agrégalos aquí.
-        // Por ejemplo: 5: 'Internas PUCV', etc.
+        1: 'CORFO',
+        4: 'ANID',
+        5: 'Internas PUCV', // Agregado basado en tu data de ejemplo
+        // Asegúrate de que todos los tipos numéricos de tu backend estén aquí.
+        // Si hay otros tipos (ej. 2 para SQM), agrégalos: 2: 'SQM',
       },
       expandedFondoId: null, // Track the currently expanded fondo's ID
       // Mapeo de tipos de fondo a sus logos importados (usa los mismos nombres que en tipoFondoMap)
       fondoLogos: {
         'CORFO': corfoLogo,
-        'SQM': sqmLogo, // Asegúrate de que 'SQM' sea un valor real en tu data (ej. si tienes tipo 2 que mapee a SQM)
+        'SQM': sqmLogo, // Si 'SQM' no es un tipo numérico en tu backend, pero sí una categoría, asegúrate de que se mapee aquí si es necesario.
         'ANID': anidLogo,
         'Internas PUCV': pucvLogo,
-        // Agrega más mapeos aquí: 'Otro Tipo de Fondo': otroLogoImportado,
+        // Agrega más mapeos aquí si tienes otros logos: 'Otro Tipo de Fondo': otroLogoImportado,
       },
     };
   },
@@ -223,7 +222,7 @@ export default {
 
         const matchesFilters =
           (this.filters.tipoFondo === null ||
-            fondo['tipo de fondo'] === this.filters.tipoFondo) && // Utiliza la nueva propiedad 'tipo de fondo'
+            fondo['tipo de fondo'] === this.filters.tipoFondo) && // Uses the new 'tipo de fondo' property
           (this.filters.trl === null || fondo.trl === this.filters.trl) &&
           (this.filters.vigente === null || isVigenteFondo === this.filters.vigente);
 
@@ -231,7 +230,7 @@ export default {
       });
     },
     tiposFondoUnicos() {
-      // Ahora se obtiene de la propiedad 'tipo de fondo' que creamos en fetchFondos
+      // Now derived from the 'tipo de fondo' property created in fetchFondos
       return [...new Set(this.fondos.map((f) => f['tipo de fondo']).filter(Boolean))].sort();
     },
   },
@@ -246,25 +245,36 @@ export default {
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);
         }
-        const data = await response.json();
-        // --- INICIO DE CAMBIOS CRÍTICOS ---
-        // Mapear los datos para agregar la propiedad 'tipo de fondo'
-        this.fondos = (data.data || []).map(fondo => {
-          if (fondo.tipo !== undefined && this.tipoFondoMap[fondo.tipo]) {
-            // Asigna la cadena de texto basada en el mapeo
-            fondo['tipo de fondo'] = this.tipoFondoMap[fondo.tipo];
-          } else {
-            // Si no hay mapeo, usa un valor predeterminado o nulo
-            fondo['tipo de fondo'] = 'Desconocido'; // O null, lo que prefieras
-          }
+        const apiData = await response.json();
+        // Ensure data.data exists and is an array (the API returns an array directly, not data.data)
+        const dataArray = apiData || []; // Adjusted this line based on your provided data structure
 
-          // Asegúrate de que TRL sea un número
+        // Mapear los datos para agregar la propiedad 'tipo de fondo' y limpiar otros datos
+        this.fondos = dataArray.map(fondo => {
+          // Asigna la cadena de texto basada en el mapeo, o 'Desconocido' si no hay mapeo
+          fondo['tipo de fondo'] = this.tipoFondoMap[fondo.tipo] || 'Desconocido';
+
+          // Asegúrate de que TRL sea un número, o null si es nulo o no parseable
           if (fondo.trl) {
             fondo.trl = parseInt(fondo.trl, 10);
+            if (isNaN(fondo.trl)) {
+              fondo.trl = null;
+            }
+          } else {
+            fondo.trl = null; // Si viene como null o undefined, mantenlo como null
           }
+
+          // Si 'req' es null en el backend, conviértelo a un string vacío para formatReqs
+          if (fondo.req === null) {
+              fondo.req = '';
+          }
+
+          // IMPORTANT: Your API data uses "id" as the unique identifier, not "id_fondo".
+          // Ensure your v-for key and toggleDetails refer to `fondo.id`.
+          // If your backend used `id_fondo`, this would be fine, but it uses `id`.
+          // I will assume `id` is the correct unique key.
           return fondo;
         });
-        // --- FIN DE CAMBIOS CRÍTICOS ---
 
       } catch (error) {
         console.error('Error fetching fondos:', error);
@@ -277,7 +287,7 @@ export default {
       if (!dateString) return 'No especificado';
       try {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        // Asegúrate de que la fecha es parseable. Si viene en formato ISO, `new Date()` la maneja.
+        // The `T00:00:00.000Z` indicates UTC. `new Date()` handles this correctly.
         return new Date(dateString).toLocaleDateString('es-CL', options);
       } catch (e) {
         console.warn('Invalid date string:', dateString, e);
@@ -289,32 +299,26 @@ export default {
       const hoy = new Date();
       const inicio = new Date(fondo.inicio);
       const cierre = new Date(fondo.cierre);
-      // Ajustar la fecha de cierre al final del día para inclusión
+      // Adjust close date to end of day for inclusive comparison
       cierre.setHours(23, 59, 59, 999);
       return hoy >= inicio && hoy <= cierre;
     },
     formatReqs(reqs) {
-      if (!reqs) return [];
-      // Mejorar la división para manejar diferentes formatos de lista
+      if (!reqs) return []; // Handles null or undefined reqs
+      // Improve splitting for various list formats and empty lines
       return reqs
-        .split(/[\r\n]+|\s*-\s*|\s*\d+\.\s*|;\s*/) // Dividir por salto de línea, guion, numeración o punto y coma
+        .split(/[\r\n]+|\s*-\s*|\s*\d+\.\s*|;\s*|\.\s+/) // Split by new line, hyphen, number. or semicolon, or period followed by space
         .map((item) => item.trim())
-        .filter((item) => item.length > 0 && item !== '-'); // Eliminar vacíos y guiones solos
+        .filter((item) => item.length > 0 && item !== '-'); // Filter out empty strings and lone hyphens
     },
-    // Este método ya no es necesario si 'tipo de fondo' es una cadena
-    // getTipoName(tipo) {
-    //   return this.tipoNames[tipo] || `Tipo ${tipo}`;
-    // },
     getFondoBadgeClass(tipoFondo) {
-      // Asegúrate de que los nombres aquí coincidan con los del tipoFondoMap
+      // Ensure names here match those in tipoFondoMap and fondoLogos
       return {
         'fondo-badge': true,
         'anid-badge': tipoFondo === 'ANID',
         'corfo-badge': tipoFondo === 'CORFO',
         'pucv-badge': tipoFondo === 'Internas PUCV',
-        // Si tienes 'SQM' y quieres un estilo específico, añádelo aquí:
-        'sqm-badge': tipoFondo === 'SQM',
-        // Clase por defecto si no coincide con ninguna
+        'sqm-badge': tipoFondo === 'SQM', // Added 'SQM' badge class if you use it
         'default-badge': !['ANID', 'CORFO', 'Internas PUCV', 'SQM'].includes(tipoFondo),
       };
     },
@@ -326,17 +330,12 @@ export default {
       };
     },
     getFondoLogo(tipoFondo) {
-      // Devuelve la URL del logo o null si no se encuentra
+      // Returns the logo URL or null if not found
       return this.fondoLogos[tipoFondo] || null;
     },
-    // updateTipoOptions ya no es necesario si no hay filtros `tipo` numéricos
-    // updateTipoOptions() {
-    //   this.filters.tipo = null;
-    // },
     resetFilters() {
       this.filters = {
         tipoFondo: null,
-        // tipo: null, // Eliminar si no se usa
         trl: null,
         vigente: null,
       };
