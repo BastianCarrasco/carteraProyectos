@@ -126,10 +126,10 @@ import 'jspdf-autotable'
 import '../assets/Proyecto_styles/respuestas_formu.css' // Esta es la importación de estilos globales de la vista
 
 // Definimos las URLs desde las variables de entorno
-const respuestasUrl = import.meta.env.VITE_API_URL_RESPUESTAS
-const academicosUrl = import.meta.env.VITE_API_URL_ACADEMICOS
-const unidadesUrl = import.meta.env.VITE_API_URL_UA
-const cuestionariosUrl = import.meta.env.VITE_API_URL_CUESTIONARIOS
+const respuestasUrl = 'https://elysia-bunbackend-production.up.railway.app/respuestas-cuestionario/ '
+const academicosUrl = 'https://elysia-bunbackend-production.up.railway.app/academicos/'
+const unidadesUrl = 'https://elysia-bunbackend-production.up.railway.app/unidades/'
+const cuestionariosUrl = 'https://elysia-bunbackend-production.up.railway.app/cuestionarios/'
 
 export default {
   data() {
