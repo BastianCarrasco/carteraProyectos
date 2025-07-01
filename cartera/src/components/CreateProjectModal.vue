@@ -219,7 +219,7 @@ const rules = {
         'Debe ser un número positivo o cero.',
     requiredIfParcial: (value) => {
         const partialApoyo = apoyosLookup.value.find(
-            (a) => a.nombre === 'PARCIAL',
+            (a) => a.nombre === 'Parcial',
         );
         const isPartialApoyoSelected =
             partialApoyo && newProject.value.apoyo === partialApoyo.id_apoyo;
@@ -227,7 +227,7 @@ const rules = {
         if (isPartialApoyoSelected) {
             return (
                 (Array.isArray(value) && value.length > 0) ||
-                'Debe seleccionar al menos un tag si el apoyo es PARCIAL.'
+                'Debe seleccionar al menos un tag si el apoyo es Parcial.'
             );
         }
         return true;
@@ -239,12 +239,12 @@ const rules = {
 
 // Computed properties for Apoyo type
 const isApoyoTotal = computed(() => {
-    const totalApoyo = apoyosLookup.value.find((a) => a.nombre === 'TOTAL');
+    const totalApoyo = apoyosLookup.value.find((a) => a.nombre === 'Total');
     return totalApoyo && newProject.value.apoyo === totalApoyo.id_apoyo;
 });
 
 const isApoyoParcial = computed(() => {
-    const partialApoyo = apoyosLookup.value.find((a) => a.nombre === 'PARCIAL');
+    const partialApoyo = apoyosLookup.value.find((a) => a.nombre === 'Parcial');
     return partialApoyo && newProject.value.apoyo === partialApoyo.id_apoyo;
 });
 
@@ -313,10 +313,10 @@ const handleApoyoChange = (newApoyoId) => {
         (a) => a.id_apoyo === newApoyoId,
     )?.nombre;
 
-    if (newApoyoName === 'TOTAL') {
-        newProject.value.detalle_apoyo = 'TOTAL';
+    if (newApoyoName === 'Total') {
+        newProject.value.detalle_apoyo = 'Total';
         selectedTags.value = [];
-    } else if (newApoyoName === 'PARCIAL') {
+    } else if (newApoyoName === 'Parcial') {
         newProject.value.detalle_apoyo = ''; // Reset to empty string for partial, then tags will fill
         selectedTags.value = [];
     } else {
@@ -432,7 +432,7 @@ const createProject = async () => {
     if (isApoyoParcial.value) {
         projectData.detalle_apoyo = selectedTags.value.join(', ');
     } else if (isApoyoTotal.value) {
-        projectData.detalle_apoyo = 'TOTAL';
+        projectData.detalle_apoyo = 'Total';
     } else {
         // If it's not TOTAL or PARCIAL, ensure it's an empty string if null/undefined/empty
         projectData.detalle_apoyo = projectData.detalle_apoyo || '';

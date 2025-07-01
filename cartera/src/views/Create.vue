@@ -375,7 +375,7 @@ const rules = {
   // New rule for v-select when Apoyo is PARCIAL
   requiredIfParcialSelect: (value) => {
     const partialApoyo = apoyosLookup.value.find(
-      (a) => a.nombre === 'PARCIAL',
+      (a) => a.nombre === 'Parcial',
     );
     const isPartialApoyoSelected =
       partialApoyo && editedProject.value.apoyo === partialApoyo.id_apoyo;
@@ -383,7 +383,7 @@ const rules = {
     if (isPartialApoyoSelected) {
       return (
         (Array.isArray(value) && value.length > 0) ||
-        'Debe seleccionar al menos un tag si el apoyo es PARCIAL.'
+        'Debe seleccionar al menos un tag si el apoyo es Parcial.'
       );
     }
     return true;
@@ -513,12 +513,12 @@ watch(itemsPerPage, () => {
 });
 
 const isApoyoTotal = computed(() => {
-  const totalApoyo = apoyosLookup.value.find((a) => a.nombre === 'TOTAL');
+  const totalApoyo = apoyosLookup.value.find((a) => a.nombre === 'Total');
   return totalApoyo && editedProject.value.apoyo === totalApoyo.id_apoyo;
 });
 
 const isApoyoParcial = computed(() => {
-  const partialApoyo = apoyosLookup.value.find((a) => a.nombre === 'PARCIAL');
+  const partialApoyo = apoyosLookup.value.find((a) => a.nombre === 'Parcial');
   return partialApoyo && editedProject.value.apoyo === partialApoyo.id_apoyo;
 });
 
@@ -695,7 +695,7 @@ const editProject = (event, { item }) => {
 
   // Initialize selectedTags based on existing detalle_apoyo if Apoyo is PARCIAL
   if (
-    getApoyoName(editedProject.value.apoyo) === 'PARCIAL' &&
+    getApoyoName(editedProject.value.apoyo) === 'Parcial' &&
     editedProject.value.detalle_apoyo
   ) {
     selectedTags.value = editedProject.value.detalle_apoyo
@@ -725,10 +725,10 @@ const handleApoyoChange = (newApoyoId) => {
   )?.nombre;
 
   // Reset relevant fields when apoyo type changes
-  if (newApoyoName === 'TOTAL') {
-    editedProject.value.detalle_apoyo = 'TOTAL';
+  if (newApoyoName === 'Total') {
+    editedProject.value.detalle_apoyo = 'Total';
     selectedTags.value = []; // Clear tags if not partial
-  } else if (newApoyoName === 'PARCIAL') {
+  } else if (newApoyoName === 'Parcial') {
     editedProject.value.detalle_apoyo = selectedTags.value.join(', '); // Initialize based on current tags
   } else {
     editedProject.value.detalle_apoyo = null; // Clear if 'Otro' or none
@@ -779,7 +779,7 @@ const saveProject = async () => {
     if (isApoyoParcial.value) {
       projectToSave.detalle_apoyo = selectedTags.value.join(', ');
     } else if (isApoyoTotal.value) {
-      projectToSave.detalle_apoyo = 'TOTAL';
+      projectToSave.detalle_apoyo = 'Total';
     } else {
       projectToSave.detalle_apoyo = projectToSave.detalle_apoyo || null;
     }
