@@ -38,9 +38,9 @@
 
                 <div class="modal-form-group">
                     <label for="edit-detalle-apoyo">Detalle de Apoyo:</label>
-                    <input v-if="getApoyoNombre(editedProjectData.apoyo) === 'TOTAL'"
+                    <input v-if="getApoyoNombre(editedProjectData.apoyo) === 'Total'"
                         v-model="editedProjectData.detalle_apoyo" readonly class="readonly-input" />
-                    <div v-else-if="getApoyoNombre(editedProjectData.apoyo) === 'PARCIAL'" class="tags-input-group">
+                    <div v-else-if="getApoyoNombre(editedProjectData.apoyo) === 'Parcial'" class="tags-input-group">
                         <input type="text" :value="editedProjectData.detalle_apoyo" readonly
                             placeholder="Seleccionar tags..." class="readonly-input" />
                         <button type="button" @click="openTagsModal" class="boton-seleccionar-tags">
@@ -237,7 +237,7 @@ initializeUnitSelection();
 const initializeTags = () => {
     // Ahora getApoyoNombre ya está definida
     const apoyoNombre = getApoyoNombre(editedProjectData.value.apoyo);
-    if (apoyoNombre === 'PARCIAL') {
+    if (apoyoNombre === 'Parcial') {
         if (
             editedProjectData.value.detalle_apoyo &&
             typeof editedProjectData.value.detalle_apoyo === 'string'
@@ -264,7 +264,7 @@ const updateDetalleApoyoFromTags = () => {
             .map((id) => props.tagsOptions.find((tag) => tag.id_apoyo === id)?.tag)
             .filter((tag) => tag !== undefined)
             .join(', ');
-    } else if (getApoyoNombre(editedProjectData.value.apoyo) === 'PARCIAL') {
+    } else if (getApoyoNombre(editedProjectData.value.apoyo) === 'Parcial') {
         editedProjectData.value.detalle_apoyo = '';
     }
 };
@@ -274,15 +274,15 @@ watch(
     (newApoyoId) => {
         if (editedProjectData.value) {
             const apoyoNombre = getApoyoNombre(newApoyoId);
-            if (apoyoNombre === 'TOTAL') {
-                editedProjectData.value.detalle_apoyo = 'TOTAL';
+            if (apoyoNombre === 'Total') {
+                editedProjectData.value.detalle_apoyo = 'Total';
                 selectedTags.value = [];
                 tempSelectedTags.value = [];
-            } else if (apoyoNombre === 'PARCIAL') {
+            } else if (apoyoNombre === 'Parcial') {
                 if (
                     editedProjectData.value.detalle_apoyo &&
                     typeof editedProjectData.value.detalle_apoyo === 'string' &&
-                    editedProjectData.value.detalle_apoyo !== 'TOTAL'
+                    editedProjectData.value.detalle_apoyo !== 'Total'
                 ) {
                     selectedTags.value = editedProjectData.value.detalle_apoyo
                         .split(', ')
@@ -310,7 +310,7 @@ watch(
     () => {
         if (
             editedProjectData.value &&
-            getApoyoNombre(editedProjectData.value.apoyo) === 'PARCIAL'
+            getApoyoNombre(editedProjectData.value.apoyo) === 'Parcial'
         ) {
             updateDetalleApoyoFromTags();
         }

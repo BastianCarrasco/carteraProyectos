@@ -140,17 +140,17 @@ const dialog = ref(false); // Controls modal visibility
 // This is for V-MODEL binding. Actual payload mapping happens in createProject.
 const newProject = ref({
     nombre: '',
-    monto: null, // Start as null to allow number input to be empty
+    monto: null,
     fecha_postulacion: null,
-    comentarios: '',
-    unidad: null, // Start as null/empty for select
+    comentarios: null,
+    unidad: null,
     id_tematica: null,
     id_estatus: null,
     tipo_convocatoria: null,
     inst_conv: null,
-    detalle_apoyo: '',
+    detalle_apoyo: null,
     apoyo: null,
-    convocatoria: '',
+    convocatoria: null,
 });
 
 const selectedTags = ref([]); // For 'PARCIAL' apoyo type
@@ -206,23 +206,19 @@ const form = ref(null);
 
 const rules = {
     required: (value) => !!value || 'Campo requerido.',
-    // 'number' and 'positiveNumber' are now optional for 'monto' if not filled
     number: (value) =>
-        value === null || // v-model.number returns null for empty
-        value === '' || // v-text-field without .number returns '' for empty
+        value === null ||
+        value === '' ||
         (!isNaN(parseFloat(value)) && isFinite(value)) ||
         'Debe ser un número válido.',
     positiveNumber: (value) =>
-        value === null || // v-model.number returns null for empty
-        value === '' || // v-text-field without .number returns '' for empty
-        parseFloat(value) >= 0 || // Changed to >= 0 as 1 is a valid default for monto
+        value === null ||
+        value === '' ||
+        parseFloat(value) >= 0 ||
         'Debe ser un número positivo o cero.',
     requiredIfParcial: (value) => {
-        const partialApoyo = apoyosLookup.value.find(
-            (a) => a.nombre === 'Parcial',
-        );
-        const isPartialApoyoSelected =
-            partialApoyo && newProject.value.apoyo === partialApoyo.id_apoyo;
+        const partialApoyo = apoyosLookup.value.find((a) => a.nombre === 'Parcial');
+        const isPartialApoyoSelected = partialApoyo && newProject.value.apoyo === partialApoyo.id_apoyo;
 
         if (isPartialApoyoSelected) {
             return (
@@ -233,8 +229,7 @@ const rules = {
         return true;
     },
     requiredJefeAcademico: (value) =>
-        (!!value || selectedAcademicosIds.value.length > 0) ||
-        'Debe seleccionar un académico jefe o añadir otros participantes.',
+        !!value || 'Debe seleccionar un académico jefe.',
 };
 
 // Computed properties for Apoyo type
@@ -384,118 +379,88 @@ const fetchDataForLookups = async () => {
 };
 
 const createProject = async () => {
-    // Validate the form (this will check required fields like 'nombre' and conditional ones)
     const { valid: formValid } = await form.value.validate();
 
-    // Custom validation for academics: ensure at least one academic (jefe or other) is selected.
     if (!hasAnyAcademicSelected.value) {
-        // This 'alert' is a fallback; the `requiredJefeAcademico` rule should ideally catch this.
-        // But for clarity, we keep an explicit check before sending.
         alert('Debe seleccionar al menos un académico (jefe o participante).');
-        console.log('No academics selected. Cannot create project.');
-        return; // Stop execution if this critical validation fails
+        return;
     }
 
-    // If formValid is false after checking all rules, stop here.
-    // This covers 'nombre' being empty and any other field rule violations.
     if (!formValid) {
         console.log('Form has validation errors. Please correct them.');
         return;
     }
 
-    // Construct the academics array
+    // Construir array de académicos
     const projectAcademics = [];
-
-    // Add the jefe academic if selected
     if (selectedJefeAcademicoId.value) {
         projectAcademics.push({
             id: selectedJefeAcademicoId.value,
-            jefe: 1, // Indicate this is the head academic
+            jefe: 1,
         });
     }
-
-    // Add other selected academics, ensuring the jefe is not duplicated
     selectedAcademicosIds.value.forEach((id) => {
         if (id !== selectedJefeAcademicoId.value) {
             projectAcademics.push({
                 id: id,
-                jefe: 0, // Indicate this is not the head academic
+                jefe: 0,
             });
         }
     });
 
+    // Crear copia del proyecto
     const projectData = { ...newProject.value };
 
-    // --- REVISED LOGIC FOR HANDLING OPTIONAL FIELDS AND BACKEND DEFAULTS ---
-
-    // 1. Handle `detalle_apoyo` (special logic for TOTAL/PARCIAL, then default to empty string)
+    // Manejar detalle_apoyo
     if (isApoyoParcial.value) {
         projectData.detalle_apoyo = selectedTags.value.join(', ');
     } else if (isApoyoTotal.value) {
         projectData.detalle_apoyo = 'Total';
-    } else {
-        // If it's not TOTAL or PARCIAL, ensure it's an empty string if null/undefined/empty
-        projectData.detalle_apoyo = projectData.detalle_apoyo || '';
     }
 
-    // 2. Handle `fecha_postulacion` (explicitly null if empty)
-    if (projectData.fecha_postulacion) {
-        // If your backend specifically needs "YYYY-MM-DDT00:00:00.000Z", ensure it's converted correctly.
-        // For 'date' type input, it's typically 'YYYY-MM-DD'. Converting to ISO string is good.
-        projectData.fecha_postulacion = new Date(
-            projectData.fecha_postulacion,
-        ).toISOString();
-    } else {
-        projectData.fecha_postulacion = null; // Ensure it's explicitly null if not provided
-    }
-
-    // 3. Handle numeric ID fields (default to 1 if not provided/cleared, or 0 for monto if desired)
-    // The backend expects 1 for these IDs if not provided.
-    const numericIdFieldsDefaultOne = [
+    // Convertir campos vacíos a null
+    const fieldsToNullify = [
+        'monto',
+        'fecha_postulacion',
+        'comentarios',
         'unidad',
         'id_tematica',
         'id_estatus',
         'tipo_convocatoria',
         'inst_conv',
         'apoyo',
+        'convocatoria',
+        'detalle_apoyo'
     ];
-    numericIdFieldsDefaultOne.forEach((key) => {
-        // Check if value is null, undefined, or empty string (common for cleared selects/number inputs)
-        if (projectData[key] === null || projectData[key] === undefined || projectData[key] === '') {
-            projectData[key] = 1; // Default to 1
-        } else {
-            projectData[key] = Number(projectData[key]); // Ensure it's a number
+
+    fieldsToNullify.forEach(field => {
+        if (projectData[field] === '' || projectData[field] === undefined) {
+            projectData[field] = null;
         }
     });
 
-    // Special handling for 'monto' if 0 is an acceptable default or if it can be left empty
-    // Based on your previous description, 1 was also a default, but 0 makes more sense for money.
-    // If you intend for 0 to be the default for monto, make sure your backend accepts 0.
-    if (projectData.monto === null || projectData.monto === undefined || projectData.monto === '') {
-        projectData.monto = 0; // Default monto to 0 if not provided
-    } else {
+    // Convertir fecha a ISO string si existe
+    if (projectData.fecha_postulacion) {
+        projectData.fecha_postulacion = new Date(projectData.fecha_postulacion).toISOString();
+    }
+
+    // Asegurar que los IDs numéricos sean números o null
+    const numericFields = ['unidad', 'id_tematica', 'id_estatus', 'tipo_convocatoria', 'inst_conv', 'apoyo'];
+    numericFields.forEach(field => {
+        if (projectData[field] !== null) {
+            projectData[field] = Number(projectData[field]);
+        }
+    });
+
+    // Asegurar que monto sea número o null
+    if (projectData.monto !== null) {
         projectData.monto = Number(projectData.monto);
     }
-    // Note: The `positiveNumber` rule was adjusted to `parseFloat(value) >= 0` to allow 0.
 
-    // 4. Handle other string fields (default to empty string if not provided/cleared)
-    const stringFieldsDefaultEmpty = ['comentarios', 'convocatoria'];
-    stringFieldsDefaultEmpty.forEach((key) => {
-        // If the value is null or undefined (e.g., from clearable textarea/text-field)
-        if (projectData[key] === null || projectData[key] === undefined) {
-            projectData[key] = ''; // Set to backend's default empty string
-        }
-        // If it's already an empty string from user input, it remains empty.
-    });
-
-    // The 'nombre' field is already handled by `newProject.nombre: ''` initialization and `rules.required`.
-
-    // Add the academics array to the project data
+    // Agregar académicos
     projectData.academicos = projectAcademics;
 
-    // --- CONSOLE LOG THE PAYLOAD HERE (for debugging) ---
-    console.log('Project data payload for POST request:', JSON.stringify(projectData, null, 2));
-    // --- END CONSOLE LOG ---
+    console.log('Project data payload:', JSON.stringify(projectData, null, 2));
 
     try {
         const response = await fetch(urlCrearProyecto, {
@@ -509,18 +474,17 @@ const createProject = async () => {
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(
-                `HTTP error! Status: ${response.status}. ${errorData.message || JSON.stringify(errorData) || ''
-                }`,
+                `HTTP error! Status: ${response.status}. ${errorData.message || JSON.stringify(errorData) || ''}`
             );
         }
 
         const result = await response.json();
         console.log('Project created successfully:', result);
-        emits('project-created'); // Emit success event
-        closeDialog(); // Close modal on success
+        emits('project-created');
+        closeDialog();
     } catch (err) {
         console.error('Error creating project:', err);
-        alert(`Error al crear proyecto: ${err.message}`); // Simple alert for now
+        alert(`Error al crear proyecto: ${err.message}`);
     }
 };
 
